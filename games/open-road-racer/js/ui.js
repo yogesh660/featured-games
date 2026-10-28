@@ -119,6 +119,15 @@ class UIController {
         this.game.toggleGameMode();
       });
     }
+
+    // Auto-start if requested in URL (e.g. for testing / headless screenshot)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('start') === '1') {
+      setTimeout(() => {
+        if (this.modalOnboard) this.modalOnboard.classList.remove('active');
+        this.game.resumeGame();
+      }, 150);
+    }
   }
 
   updateHUD(telemetry, lapTimeMs, currentCp, totalCp, mode) {

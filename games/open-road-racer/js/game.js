@@ -1,6 +1,6 @@
 /**
- * Open Road Racer - Main Game Controller & Loop
- * Integrates Three.js, Physics, Sound, World and Lap Timing.
+ * Open Road Racer - Main Game Controller & Loop (Overhauled)
+ * Seamless 60fps render loop, ACES Filmic Tone Mapping, Time Trial logic & sound integration.
  */
 
 class OpenRoadGame {
@@ -11,23 +11,22 @@ class OpenRoadGame {
     this.renderer = null;
     this.clock = new THREE.Clock();
 
-    // Core Systems
+    // Systems
     this.world = null;
     this.vehicle = null;
     this.input = null;
     this.sound = null;
     this.ui = null;
 
-    // Game Mode & Timing
+    // State
     this.mode = 'trial'; // 'trial' or 'free'
     this.isPaused = false;
+    this.lapActive = false;
     this.lapStartTime = 0;
     this.currentLapTime = 0;
     this.currentCheckpointIdx = 0;
     this.totalCheckpoints = 8;
-    this.lapActive = false;
 
-    // Graphics Quality
     this.quality = 'high';
 
     this.init();
@@ -48,17 +47,16 @@ class OpenRoadGame {
       this.setupEventListeners();
       this.hideLoader();
 
-      // Start render loop
+      // Start Clock & Render Loop
       this.clock.start();
       requestAnimationFrame((t) => this.renderLoop(t));
 
-      // Show welcome notice
       setTimeout(() => {
-        this.ui.showAlert("WELCOME TO SAHYADRI GHATS — WASD TO DRIVE", 3500);
-      }, 500);
+        this.ui.showAlert("WELCOME TO SAHYADRI GHATS — WASD OR TOUCH TO DRIVE", 3800);
+      }, 600);
 
     } catch (err) {
-      console.error("Initialization error:", err);
+      console.error("Game initialization error:", err);
       this.showError(err.message);
     }
   }
@@ -70,12 +68,21 @@ class OpenRoadGame {
       60,
       window.innerWidth / window.innerHeight,
       0.1,
-      1200
+      1400
     );
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: 'high-performance'
+    });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2.0));
+
+    // Cinematic Color Grading & Tone Mapping
+    this.renderer.outputEncoding = THREE.sRGBEncoding;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.08;
+
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -85,9 +92,11 @@ class OpenRoadGame {
   setupEventListeners() {
     window.addEventListener('resize', () => this.onResize());
 
-    // Resume Web Audio on first user interaction
     const unlockAudio = () => {
-      if (this.sound) this.sound.init();
+      if (this.sound) {
+        this.sound.init();
+        this.sound.resume();
+      }
       window.removeEventListener('click', unlockAudio);
       window.removeEventListener('keydown', unlockAudio);
       window.removeEventListener('touchstart', unlockAudio);
@@ -107,21 +116,19 @@ class OpenRoadGame {
   renderLoop() {
     requestAnimationFrame((t) => this.renderLoop(t));
 
-    // Clamp delta time to avoid large physics steps after tab focus loss
     let dt = this.clock.getDelta();
-    if (dt > 0.1) dt = 0.1;
+    if (dt > 0.08) dt = 0.08; // Clamp delta time
 
-    // Check pause action from keyboard
     if (this.input.consumeAction('togglePause')) {
       this.togglePause();
     }
 
     if (this.isPaused) return;
 
-    // 1. Update Input Manager
+    // 1. Process Inputs
     this.input.update(dt);
 
-    // 2. Update Vehicle Physics
+    // 2. Step Vehicle Simulation
     const telemetry = this.vehicle.update(dt, this.input);
 
     // 3. Update Audio Synthesizer
@@ -134,13 +141,13 @@ class OpenRoadGame {
       );
     }
 
-    // 4. Update Camera Tracking
+    // 4. Update Camera
     this.vehicle.updateCamera(this.camera, dt);
 
-    // 5. Update Time Trial / Lap Logic
+    // 5. Update Time Trial / Checkpoints
     this.updateTiming(dt);
 
-    // 6. Update HUD Displays
+    // 6. Update HUD
     this.ui.updateHUD(
       telemetry,
       this.currentLapTime,
@@ -149,7 +156,7 @@ class OpenRoadGame {
       this.mode
     );
 
-    // 7. Render Scene
+    // 7. Render
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -165,33 +172,28 @@ class OpenRoadGame {
       this.currentLapTime = performance.now() - this.lapStartTime;
     }
 
-    // Checkpoint gate crossing detection
     const carU = this.vehicle.progressU;
     const targetCp = this.world.checkpoints[this.currentCheckpointIdx];
 
     if (targetCp) {
-      // Check proximity along spline
       let diff = carU - targetCp.u;
       if (diff < -0.5) diff += 1.0;
       if (diff > 0.5) diff -= 1.0;
 
-      if (Math.abs(diff) < 0.025) {
-        // Crossed checkpoint
+      if (Math.abs(diff) < 0.024) {
         this.sound.playCheckpointChime();
         this.currentCheckpointIdx++;
 
         if (this.currentCheckpointIdx >= this.totalCheckpoints) {
-          // Lap Completed!
-          this.sound.playCheckpointChime();
           const finishedTime = this.currentLapTime;
-          this.ui.showAlert(`LAP FINISHED: ${this.ui.formatTime(finishedTime)}!`, 4000);
+          this.ui.showAlert(`LAP COMPLETE: ${this.ui.formatTime(finishedTime)}!`, 4500);
           this.ui.saveBestTime(finishedTime);
 
           // Start next lap
           this.currentCheckpointIdx = 0;
           this.lapStartTime = performance.now();
         } else {
-          this.ui.showAlert(`CHECKPOINT ${this.currentCheckpointIdx} PASSED!`);
+          this.ui.showAlert(`CHECKPOINT ${this.currentCheckpointIdx} / ${this.totalCheckpoints}`);
         }
       }
     }
@@ -212,11 +214,11 @@ class OpenRoadGame {
 
   resumeGame() {
     this.isPaused = false;
-    this.clock.getDelta(); // Clear delta accumulation
+    this.clock.getDelta();
   }
 
   restartRun() {
-    this.vehicle.progressU = 0.005;
+    this.vehicle.progressU = 0.002;
     this.vehicle.resetPosition();
     this.lapActive = false;
     this.currentLapTime = 0;
@@ -225,7 +227,7 @@ class OpenRoadGame {
   }
 
   toggleGameMode() {
-    this.mode = this.mode === 'trial' ? 'free' : 'trial';
+    this.mode = (this.mode === 'trial') ? 'free' : 'trial';
     this.restartRun();
   }
 

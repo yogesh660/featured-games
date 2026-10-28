@@ -31,6 +31,21 @@ class InputManager {
     if (this.isTouchDevice) {
       this.setupTouch();
     }
+
+    // QA test-drive mode support
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('testdrive') === '1') {
+      let simTime = 0;
+      setInterval(() => {
+        simTime += 0.05;
+        this.rawKeys['KeyW'] = true;
+        if (simTime > 1.0 && simTime < 3.2) {
+          this.rawKeys['KeyD'] = true;
+        } else {
+          this.rawKeys['KeyD'] = false;
+        }
+      }, 50);
+    }
   }
 
   setupKeyboard() {
