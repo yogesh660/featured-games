@@ -39,7 +39,7 @@ class OpenRoadGame {
       this.input = new InputManager();
 
       this.world = new WorldGenerator(this.scene);
-      this.world.init(this.quality);
+      this.world.init(this.renderer, this.quality);
 
       this.vehicle = new Vehicle(this.scene, this.world);
       this.ui = new UIController(this);
@@ -156,7 +156,12 @@ class OpenRoadGame {
       this.mode
     );
 
-    // 7. Render
+    // 7. Dynamic Shadow Frustum Focus
+    if (this.world && this.world.updateShadowFocus) {
+      this.world.updateShadowFocus(this.vehicle.carGroup.position);
+    }
+
+    // 8. Render
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -172,30 +177,61 @@ class OpenRoadGame {
       this.currentLapTime = performance.now() - this.lapStartTime;
     }
 
-    const carU = this.vehicle.progressU;
     const targetCp = this.world.checkpoints[this.currentCheckpointIdx];
-
     if (targetCp) {
-      let diff = carU - targetCp.u;
-      if (diff < -0.5) diff += 1.0;
-      if (diff > 0.5) diff -= 1.0;
+      // Front wheels / front bumper 3D position (1.8m ahead of vehicle origin)
+      const forward = this.vehicle.getForwardVector();
+      const frontBumper = this.vehicle.carGroup.position.clone().addScaledVector(forward, 1.8);
 
-      if (Math.abs(diff) < 0.024) {
-        this.sound.playCheckpointChime();
-        this.currentCheckpointIdx++;
+      // Signed distance along gate road tangent
+      const toFront = frontBumper.clone().sub(targetCp.position);
+      const distAlongTangent = toFront.dot(targetCp.tangent);
+      const distLateral = Math.abs(toFront.dot(targetCp.right));
 
-        if (this.currentCheckpointIdx >= this.totalCheckpoints) {
-          const finishedTime = this.currentLapTime;
-          this.ui.showAlert(`LAP COMPLETE: ${this.ui.formatTime(finishedTime)}!`, 4500);
-          this.ui.saveBestTime(finishedTime);
+      // Difference in spline progress
+      let diffU = this.vehicle.progressU - targetCp.u;
+      if (diffU < -0.5) diffU += 1.0;
+      if (diffU > 0.5) diffU -= 1.0;
 
-          // Start next lap
-          this.currentCheckpointIdx = 0;
-          this.lapStartTime = performance.now();
-        } else {
-          this.ui.showAlert(`CHECKPOINT ${this.currentCheckpointIdx} / ${this.totalCheckpoints}`);
+      // Trigger gate passed strictly when front wheels cross the gate plane:
+      // 1. Vehicle is in proximity of the gate (-0.012 to +0.020 spline progress, within lateral corridor)
+      // 2. Front wheels crossed plane: current distAlongTangent >= 0, and previous distance was < 0
+      const inGateVicinity = (diffU >= -0.012 && diffU <= 0.020 && distLateral < 10.0);
+
+      if (inGateVicinity) {
+        if (distAlongTangent >= 0 && (targetCp.lastDist < 0 || targetCp.lastDist === -999)) {
+          // Physical front-wheel gate crossing confirmed!
+          if (this.sound) this.sound.playCheckpointChime();
+
+          // Visual flash on checkpoint beam
+          if (targetCp.beamMesh && targetCp.beamMesh.material) {
+            const originalHex = targetCp.beamMesh.material.color.getHex();
+            targetCp.beamMesh.material.color.setHex(0xffffff);
+            setTimeout(() => {
+              if (targetCp.beamMesh && targetCp.beamMesh.material) {
+                targetCp.beamMesh.material.color.setHex(originalHex);
+              }
+            }, 350);
+          }
+
+          this.currentCheckpointIdx++;
+
+          if (this.currentCheckpointIdx >= this.totalCheckpoints) {
+            const finishedTime = this.currentLapTime;
+            this.ui.showAlert(`LAP COMPLETE: ${this.ui.formatTime(finishedTime)}!`, 4500);
+            this.ui.saveBestTime(finishedTime);
+
+            // Start next lap
+            this.currentCheckpointIdx = 0;
+            this.lapStartTime = performance.now();
+            this.world.checkpoints.forEach(cp => { cp.lastDist = -999; });
+          } else {
+            this.ui.showAlert(`CHECKPOINT ${this.currentCheckpointIdx} / ${this.totalCheckpoints}`);
+          }
         }
       }
+
+      targetCp.lastDist = distAlongTangent;
     }
   }
 
@@ -218,11 +254,14 @@ class OpenRoadGame {
   }
 
   restartRun() {
-    this.vehicle.progressU = 0.002;
+    this.vehicle.progressU = 0.005;
     this.vehicle.resetPosition();
     this.lapActive = false;
     this.currentLapTime = 0;
     this.currentCheckpointIdx = 0;
+    if (this.world && this.world.checkpoints) {
+      this.world.checkpoints.forEach(cp => { cp.lastDist = -999; });
+    }
     this.ui.showAlert("RUN RESTARTED");
   }
 

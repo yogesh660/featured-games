@@ -25,6 +25,16 @@ class UIController {
     this.alertTimeout = null;
     this.loadBestTime();
     this.setupListeners();
+
+    // Auto-start for headless testing or direct link
+    if (window.location.search.includes('autostart=1')) {
+      if (this.modalOnboard) this.modalOnboard.classList.remove('active');
+      this.game.resumeGame();
+      if (window.location.search.includes('speed=1')) {
+        this.game.vehicle.speedKmh = 90.0;
+        this.game.input.keys.throttle = true;
+      }
+    }
   }
 
   setupListeners() {
