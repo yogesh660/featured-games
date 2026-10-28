@@ -1,0 +1,12 @@
+# Archives & Build artifacts
+*.zip
+*.tar.gz
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
