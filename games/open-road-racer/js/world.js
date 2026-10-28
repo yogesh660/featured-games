@@ -106,16 +106,18 @@ class WorldGenerator {
     const point = this.roadCurve.getPointAt(normU);
     const tangent = this.roadCurve.getTangentAt(normU).normalize();
 
-    let right = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0, 1, 0)).normalize();
+    // True horizontal right vector: UP x Tangent = +Right (Correct right-hand rule)
+    let right = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), tangent).normalize();
     if (right.lengthSq() < 0.001) right.set(1, 0, 0);
 
-    const normal = new THREE.Vector3().crossVectors(right, tangent).normalize();
+    // True surface normal: Tangent x Right = +Normal (Points strictly upward)
+    const normal = new THREE.Vector3().crossVectors(tangent, right).normalize();
 
     // Subtle corner banking
     const nextU = (normU + 0.004) % 1.0;
     const nextTangent = this.roadCurve.getTangentAt(nextU).normalize();
     const curveAmount = (nextTangent.x * tangent.z - nextTangent.z * tangent.x);
-    const bankAngle = THREE.MathUtils.clamp(-curveAmount * 16.0, -0.07, 0.07);
+    const bankAngle = THREE.MathUtils.clamp(curveAmount * 16.0, -0.07, 0.07);
 
     if (Math.abs(bankAngle) > 0.001) {
       right.applyAxisAngle(tangent, bankAngle);
@@ -197,8 +199,9 @@ class WorldGenerator {
         const v3 = (i + 1) * 2;
         const v4 = (i + 1) * 2 + 1;
 
-        indices.push(v1, v2, v3);
-        indices.push(v2, v4, v3);
+        // Counter-clockwise winding facing upward towards sky
+        indices.push(v1, v3, v2);
+        indices.push(v2, v3, v4);
       }
     }
 

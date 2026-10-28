@@ -190,10 +190,10 @@ class Vehicle {
     this.carGroup.add(tlBar);
     this.brakeLights.push(tlBar);
 
-    // 5. 4 Wheels with Silver Star Rims & Rubber Tires
-    const wheelGeom = new THREE.CylinderGeometry(0.38, 0.38, 0.3, 18);
+    // 5. 4 Wheels with Separate Steer & Spin Groups (Zero Wobble)
+    const wheelGeom = new THREE.CylinderGeometry(0.38, 0.38, 0.3, 20);
     wheelGeom.rotateZ(Math.PI / 2);
-    const tireMat = new THREE.MeshStandardMaterial({ color: 0x16171b, roughness: 0.88 });
+    const tireMat = new THREE.MeshStandardMaterial({ color: 0x141518, roughness: 0.9 });
 
     const rimGeom = new THREE.CylinderGeometry(0.25, 0.25, 0.32, 10);
     rimGeom.rotateZ(Math.PI / 2);
@@ -207,17 +207,27 @@ class Vehicle {
     ];
 
     wheelPos.forEach((p) => {
-      const wGroup = new THREE.Group();
-      wGroup.position.set(p.x, 0.38, p.z);
+      // Steer Group: yaw rotation around Y ONLY
+      const steerGroup = new THREE.Group();
+      steerGroup.position.set(p.x, 0.38, p.z);
+
+      // Spin Group: pure pitch roll around axle X ONLY
+      const spinGroup = new THREE.Group();
 
       const tire = new THREE.Mesh(wheelGeom, tireMat);
       tire.castShadow = true;
       const rim = new THREE.Mesh(rimGeom, rimMat);
-      wGroup.add(tire);
-      wGroup.add(rim);
+      spinGroup.add(tire);
+      spinGroup.add(rim);
 
-      this.carGroup.add(wGroup);
-      this.wheels.push({ mesh: wGroup, isFront: p.isFront });
+      steerGroup.add(spinGroup);
+      this.carGroup.add(steerGroup);
+
+      this.wheels.push({
+        steerGroup: steerGroup,
+        spinGroup: spinGroup,
+        isFront: p.isFront
+      });
     });
 
     this.scene.add(this.carGroup);
@@ -295,13 +305,14 @@ class Vehicle {
     const targetSteer = input.keys.steer * this.maxSteerAngle * speedFactor;
     this.steerAngle += (targetSteer - this.steerAngle) * Math.min(1.0, 9.0 * dt);
 
-    // Wheel visual rotation and steering
+    // Wheel visual rotation and steering:
+    // Front wheels steer cleanly around local Y; all wheels spin purely around local axle X (Zero wobble)
     const rollRate = (this.speedKmh / 3.6) / 0.38;
     this.wheels.forEach(w => {
       if (w.isFront) {
-        w.mesh.rotation.y = -this.steerAngle * 1.1;
+        w.steerGroup.rotation.y = -this.steerAngle;
       }
-      w.mesh.rotation.x += rollRate * dt;
+      w.spinGroup.rotation.x += rollRate * dt;
     });
 
     // 4. Spline Progress
@@ -311,7 +322,7 @@ class Vehicle {
 
     this.progressU = ((this.progressU + deltaU) % 1.0 + 1.0) % 1.0;
 
-    // Lateral movement across road width
+    // Lateral movement across road width (Steering right moves car +right)
     const driftMultiplier = this.isDrifting ? 2.4 : 1.0;
     const lateralSpeed = this.steerAngle * Math.abs(speedMs) * 1.65 * driftMultiplier;
     this.lateralOffset += lateralSpeed * dt;
@@ -332,9 +343,9 @@ class Vehicle {
     carPos.addScaledVector(normal, 0.05);
     this.carGroup.position.copy(carPos);
 
-    // Vehicle heading: road tangent rotated by current steering/drift angle
+    // Vehicle heading: road tangent yawed into the turn (-steerAngle around normal yaws right)
     const headingTangent = tangent.clone();
-    headingTangent.applyAxisAngle(normal, this.steerAngle * (this.isDrifting ? 0.75 : 0.45));
+    headingTangent.applyAxisAngle(normal, -this.steerAngle * (this.isDrifting ? 0.75 : 0.45));
 
     // Stable look-at orientation aligned with road normal
     const rotMat = new THREE.Matrix4();
