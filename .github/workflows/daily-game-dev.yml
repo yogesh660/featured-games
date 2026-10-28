@@ -1,0 +1,34 @@
+name: Daily Game Development Pipeline
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs once every day at 00:00 UTC
+  workflow_dispatch:      # Allows manual trigger at any time
+
+permissions:
+  contents: write
+
+jobs:
+  run-daily-step:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Daily Development Step
+        run: |
+          python scripts/daily_game_dev.py
+
+      - name: Commit & Push Daily Milestone
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore(pipeline): execute scheduled daily game development step" && git push)

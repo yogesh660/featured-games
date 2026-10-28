@@ -1,0 +1,103 @@
+{
+  "project_name": "Featured Games Collection",
+  "repository": "yogesh660/featured-games",
+  "cadence_hours": 24,
+  "current_step_index": 1,
+  "total_steps": 12,
+  "last_run_timestamp": "2026-10-29T02:00:00Z",
+  "completed_steps": [
+    {
+      "step_id": 1,
+      "game": "Open Road Racer",
+      "title": "Minimum Playable 3D Mountain Racer",
+      "completed_at": "2026-10-29T02:00:00Z",
+      "summary": "Three.js 3D spline road, Western Ghats scenery, procedural low-poly coupe, arcade physics, Web Audio synthesizer, mobile touch controls, HUD speedometer and Time Trial mode."
+    }
+  ],
+  "roadmap": [
+    {
+      "step_id": 1,
+      "game": "Open Road Racer",
+      "title": "Minimum Playable 3D Mountain Racer",
+      "description": "Initial playable Three.js driving game on continuous Western Ghats spline road with dual cameras, audio synth, and HUD.",
+      "status": "completed"
+    },
+    {
+      "step_id": 2,
+      "game": "Open Road Racer",
+      "title": "Atmospheric Scenery & Rock Tunnels",
+      "description": "Add mountain tunnel passages, roadside basalt cliff overhangs, and dynamic golden-hour / monsoon weather presets.",
+      "status": "pending"
+    },
+    {
+      "step_id": 3,
+      "game": "Open Road Racer",
+      "title": "Ghost Vehicle & Split-Time Precision",
+      "description": "Record and replay translucent ghost car of player's personal best run with real-time delta (+/- seconds) at checkpoints.",
+      "status": "pending"
+    },
+    {
+      "step_id": 4,
+      "game": "Space Defender",
+      "title": "Canvas 2D Flight & Dual Lasers",
+      "description": "Implement the player ship, inertia movement, dual plasma laser cannons, and screen boundary collision.",
+      "status": "pending"
+    },
+    {
+      "step_id": 5,
+      "game": "Space Defender",
+      "title": "Enemy Formations & Particle Explosions",
+      "description": "Implement 3 enemy types with sinusoidal and dive-bomb attack patterns, collision masks, and particle burst pools.",
+      "status": "pending"
+    },
+    {
+      "step_id": 6,
+      "game": "Space Defender",
+      "title": "Power-Ups, Boss Fight & Retro Synth",
+      "description": "Implement shields, spread-shot upgrades, wave 5 mothership encounter, and procedural 8-bit Web Audio chiptune effects.",
+      "status": "pending"
+    },
+    {
+      "step_id": 7,
+      "game": "Neural Puzzle",
+      "title": "Matrix Grid & Conduit Rotation",
+      "description": "Build interactive tile grid with straight, corner, cross, and blocker conduits supporting mouse and touch tap rotation.",
+      "status": "pending"
+    },
+    {
+      "step_id": 8,
+      "game": "Neural Puzzle",
+      "title": "Signal Path Graph Traversal",
+      "description": "Implement depth-first search graph validator checking continuous circuit from energy source to targets with glowing wire pulses.",
+      "status": "pending"
+    },
+    {
+      "step_id": 9,
+      "game": "Neural Puzzle",
+      "title": "20 Authored Levels & Daily Puzzle Seed",
+      "description": "Integrate 20 curated puzzle challenges across Easy/Medium/Hard, hint assistance system, and deterministic daily puzzle seed.",
+      "status": "pending"
+    },
+    {
+      "step_id": 10,
+      "game": "FPV Time Trial",
+      "title": "3D Acrobatic Drone Physics",
+      "description": "Implement Three.js quadcopter flight model with throttle, pitch, roll, yaw, stabilized horizon, and arcade assist presets.",
+      "status": "pending"
+    },
+    {
+      "step_id": 11,
+      "game": "FPV Time Trial",
+      "title": "Neon Gate Trigger Volumes & Split Timing",
+      "description": "Construct illuminated 3D racing gates with volumetric trigger detection, missed gate penalties, and lap timer.",
+      "status": "pending"
+    },
+    {
+      "step_id": 12,
+      "game": "FPV Time Trial",
+      "title": "Sahyadri Ridge Drone Track & Sound FX",
+      "description": "Design an elevated mountain canyon course, directional guide arrows, synthesized propeller hum, and crash reset logic.",
+      "status": "pending"
+    }
+  ]
+}

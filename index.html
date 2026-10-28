@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#070709">
+  <title>Featured Games — Yogesh Awate</title>
+  <meta name="description" content="A collection of polished, responsive browser games hosted on GitHub Pages.">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body class="page-games">
+
+  <!-- Top Navigation (Identical to yogesh660.github.io) -->
+  <nav id="nav">
+    <a class="mark" href="https://yogesh660.github.io" target="_blank" aria-label="Yogesh Awate, home">YA<span>.</span></a>
+    <div class="navlinks" id="navlinks">
+      <a href="https://yogesh660.github.io/work/" target="_blank">Work</a>
+      <a href="https://yogesh660.github.io/projects/" target="_blank">Open source</a>
+      <a href="index.html" class="active">Featured Games</a>
+      <a href="https://yogesh660.github.io/about/" target="_blank">About</a>
+    </div>
+  </nav>
+
+  <main class="container" id="main">
+    <!-- Hero Section -->
+    <header class="hero">
+      <span class="kicker">Interactive Web Experiences · GitHub Pages</span>
+      <h1>Featured Games</h1>
+      <p>Polished, playable browser games built with WebGL (Three.js), Canvas, and procedural Web Audio. Zero external plugins, zero accounts—pure client-side craftsmanship.</p>
+    </header>
+
+    <!-- Hero Spotlight: Open Road Racer (Playable Now) -->
+    <section class="featured-card">
+      <div class="featured-content">
+        <div>
+          <div class="badge-live">
+            <div class="pulse-dot"></div> Live & Playable Now
+          </div>
+          <h2 class="featured-title">Open Road Racer</h2>
+          <p class="featured-desc">
+            A relaxing 3D mountain-road driving experience inspired by the winding passes of India's Western Ghats / Sahyadri. Featuring procedural road splines, dynamic elevation, responsive arcade physics, synthesized audio, and dual chase/cockpit cameras.
+          </p>
+
+          <div class="feature-tags">
+            <span class="feature-tag">Three.js 3D</span>
+            <span class="feature-tag">Sahyadri Scenery</span>
+            <span class="feature-tag">Time Trial & Free Cruise</span>
+            <span class="feature-tag">Web Audio Synth</span>
+            <span class="feature-tag">Touch & Keyboard</span>
+          </div>
+
+          <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <a href="games/open-road-racer/index.html" class="btn btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              Launch Open Road Racer
+            </a>
+            <a href="docs/open-road-racer-gdd.md" target="_blank" class="btn btn-secondary">
+              View Design Spec
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Collection Grid -->
+    <div class="grid-title">
+      <span>Games Collection</span>
+      <span style="font-family: var(--mono); font-size: 13px; color: var(--muted); font-weight: 400;">4 Titles Planned</span>
+    </div>
+
+    <div class="games-grid">
+      <!-- Game 01: Open Road Racer -->
+      <article class="game-card">
+        <div>
+          <div class="card-header">
+            <span class="card-num">GAME 01</span>
+            <span class="status-pill ready">Playable</span>
+          </div>
+          <h3 class="card-title">Open Road Racer</h3>
+          <p class="card-desc">
+            Cruising and time-trial runs through procedural Sahyadri ghats. Full physics, gear simulation, and distance mist.
+          </p>
+        </div>
+        <div>
+          <div class="card-meta">
+            <span>Three.js / 3D</span>
+            <a href="games/open-road-racer/index.html" style="color: var(--violet-2); font-weight: 600;">Play Now →</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Game 02: Space Defender -->
+      <article class="game-card">
+        <div>
+          <div class="card-header">
+            <span class="card-num">GAME 02</span>
+            <span class="status-pill in-progress">In Pipeline</span>
+          </div>
+          <h3 class="card-title">Space Defender</h3>
+          <p class="card-desc">
+            Fast, readable arcade wave shooter protecting deep-space outposts against escalating alien formations and power-ups.
+          </p>
+        </div>
+        <div>
+          <div class="card-meta">
+            <span>Canvas 2D / Waves</span>
+            <a href="games/space-defender/index.html" style="color: var(--cyan); font-weight: 600;">View Milestone →</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Game 03: Neural Puzzle -->
+      <article class="game-card">
+        <div>
+          <div class="card-header">
+            <span class="card-num">GAME 03</span>
+            <span class="status-pill planned">Planned</span>
+          </div>
+          <h3 class="card-title">Neural Puzzle</h3>
+          <p class="card-desc">
+            Futuristic logic and pattern-solving game. Rotate conduits to complete continuous neural circuits within move limits.
+          </p>
+        </div>
+        <div>
+          <div class="card-meta">
+            <span>CSS Grid / Graph</span>
+            <a href="games/neural-puzzle/index.html" style="color: var(--soft); font-weight: 600;">View Spec →</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- Game 04: FPV Time Trial -->
+      <article class="game-card">
+        <div>
+          <div class="card-header">
+            <span class="card-num">GAME 04</span>
+            <span class="status-pill planned">Planned</span>
+          </div>
+          <h3 class="card-title">FPV Time Trial</h3>
+          <p class="card-desc">
+            Acrobatic first-person drone obstacle courses featuring neon gates, split-second timing, and assisted handling modes.
+          </p>
+        </div>
+        <div>
+          <div class="card-meta">
+            <span>Three.js / Sim</span>
+            <a href="games/fpv-time-trial/index.html" style="color: var(--soft); font-weight: 600;">View Spec →</a>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Daily Automated Development Roadmap -->
+    <section class="automation-panel">
+      <div class="automation-header">
+        <div class="automation-title">
+          <span class="icon">⚡</span> Daily Development Automation Engine
+        </div>
+        <span class="badge-live" style="background: rgba(140, 124, 255, 0.12); color: var(--violet-2); border-color: rgba(140, 124, 255, 0.3);">
+          Step Cadence: 1 Step / Day
+        </span>
+      </div>
+      <p style="color: var(--soft); font-size: 14px; margin: 0;">
+        Development of each game progresses in verified, incremental steps. The automated runner <code>scripts/daily_game_dev.py</code> tracks state via <code>scripts/game_dev_state.json</code>, executing the next planned milestone on each daily trigger.
+      </p>
+
+      <div class="pipeline-step-list">
+        <div class="step-item active">
+          <div class="step-day">Step 01 · Completed</div>
+          <div class="step-name">Open Road Racer Launch</div>
+          <div class="step-detail">3D physics, Sahyadri road spline, Web Audio synth, touch & HUD.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-day">Step 02 · Next</div>
+          <div class="step-name">Space Defender Core Loop</div>
+          <div class="step-detail">Ship flight, projectile pooling, and wave spawn formations.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-day">Step 03</div>
+          <div class="step-name">Space Defender Polish</div>
+          <div class="step-detail">Power-ups, shield mechanics, and local high score persistence.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-day">Step 04</div>
+          <div class="step-name">Neural Puzzle Engine</div>
+          <div class="step-detail">Grid rotation, path traversal graph, and tutorial puzzle pack.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div>Crafted for <a href="https://yogesh660.github.io" target="_blank" style="color:var(--ink);">yogesh660.github.io</a> · Static GitHub Pages</div>
+    <div style="display: flex; gap: 20px;">
+      <a href="docs/open-road-racer-gdd.md" target="_blank">Docs</a>
+      <a href="https://github.com/yogesh660/featured-games" target="_blank">GitHub Repository ↗</a>
+    </div>
+  </footer>
+
+</body>
+</html>
