@@ -60,6 +60,7 @@ class NeuralGenerator {
     // 3. Connect Source to all Targets using BFS Steiner Tree
     const connectedSet = new Set();
     connectedSet.add(`${startX},${startY}`);
+    let sourceOutDir = null;
 
     for (const tgt of targetPositions) {
       if (connectedSet.has(`${tgt.x},${tgt.y}`)) continue;
@@ -102,20 +103,27 @@ class NeuralGenerator {
           connections[step.toY][step.toX][OPPOSITE_DIR[step.dir]] = true;
           connectedSet.add(`${step.fromX},${step.fromY}`);
           connectedSet.add(`${step.toX},${step.toY}`);
+          if (step.toX === startX && step.toY === startY) {
+            sourceOutDir = OPPOSITE_DIR[step.dir];
+          }
         });
       }
     }
 
-    // 4. Optionally add loops/alternative routes
-    const extraLoops = difficulty === 'casual' ? 1 : (difficulty === 'expert' ? 4 : 2);
+    // 4. Optionally add loops/alternative routes ONLY between existing circuit nodes
+    const extraLoops = difficulty === 'casual' ? 0 : (difficulty === 'expert' ? 2 : 1);
     for (let l = 0; l < extraLoops; l++) {
       const rx = Math.floor(rng() * (width - 1));
       const ry = Math.floor(rng() * (height - 1));
       const d = rng() > 0.5 ? DIRS.EAST : DIRS.SOUTH;
       const nx = rx + DIR_VECTORS[d].dx;
       const ny = ry + DIR_VECTORS[d].dy;
-      connections[ry][rx][d] = true;
-      connections[ny][nx][OPPOSITE_DIR[d]] = true;
+      const isSrcOrTgtA = (rx === startX && ry === startY) || targetPositions.some(t => t.x === rx && t.y === ry);
+      const isSrcOrTgtB = (nx === startX && ny === startY) || targetPositions.some(t => t.x === nx && t.y === ny);
+      if (!isSrcOrTgtA && !isSrcOrTgtB && connectedSet.has(`${rx},${ry}`) && connectedSet.has(`${nx},${ny}`)) {
+        connections[ry][rx][d] = true;
+        connections[ny][nx][OPPOSITE_DIR[d]] = true;
+      }
     }
 
     // 5. Convert connections into tile types and canonical rotations
@@ -130,12 +138,7 @@ class NeuralGenerator {
       for (let x = 0; x < width; x++) {
         // Is this the source?
         if (x === startX && y === startY) {
-          // Point source towards an active neighbor
-          let outDir = DIRS.EAST;
-          for (let d = 0; d < 4; d++) {
-            if (connections[y][x][d]) { outDir = d; break; }
-          }
-          const rot = outDir; // base port is North (0)
+          const rot = sourceOutDir !== null ? sourceOutDir : DIRS.EAST;
           tileRow.push({ type: 'source', rotation: rot, color: 'cyan', fixed: true });
           solRow.push(rot);
           continue;
@@ -144,13 +147,8 @@ class NeuralGenerator {
         // Is this one of the targets?
         const isTarget = targetPositions.some(t => t.x === x && t.y === y);
         if (isTarget) {
-          let inDir = DIRS.WEST;
-          for (let d = 0; d < 4; d++) {
-            if (connections[y][x][d]) { inDir = d; break; }
-          }
-          const rot = inDir;
-          tileRow.push({ type: 'target', rotation: rot, color: 'cyan', fixed: true });
-          solRow.push(rot);
+          tileRow.push({ type: 'target', rotation: 0, color: 'cyan', fixed: true });
+          solRow.push(0);
           continue;
         }
 
@@ -161,16 +159,8 @@ class NeuralGenerator {
         }
 
         if (ports.length === 0) {
-          // Inert block or random filler
-          if (rng() > 0.4) {
-            tileRow.push({ type: 'block' });
-            solRow.push(0);
-          } else {
-            // Unused conduit
-            const rot = Math.floor(rng() * 4);
-            tileRow.push({ type: 'straight', rotation: rot });
-            solRow.push(rot);
-          }
+          tileRow.push({ type: 'block' });
+          solRow.push(0);
           continue;
         }
 
