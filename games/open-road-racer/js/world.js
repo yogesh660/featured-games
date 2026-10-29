@@ -129,12 +129,12 @@ class WorldGenerator {
     const point = this.roadCurve.getPointAt(normU);
     const tangent = this.roadCurve.getTangentAt(normU).normalize();
 
-    // Baseline horizontal right vector: UP x Tangent = +Right (Strictly horizontal: right.y = 0)
-    let right0 = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), tangent).normalize();
-    if (right0.lengthSq() < 0.001) right0.set(1, 0, 0);
+    // Baseline horizontal right vector: Tangent x UP = +Right (Strictly horizontal: right.y = 0)
+    let right0 = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0, 1, 0)).normalize();
+    if (right0.lengthSq() < 0.001) right0.set(-1, 0, 0);
 
-    // Baseline surface normal: Tangent x Right = +Normal
-    const normal0 = new THREE.Vector3().crossVectors(tangent, right0).normalize();
+    // Baseline surface normal: Right x Tangent = +Normal
+    const normal0 = new THREE.Vector3().crossVectors(right0, tangent).normalize();
 
     // Subtle corner banking proportional to curvature
     const du = 0.003;
@@ -272,7 +272,7 @@ class WorldGenerator {
       map: this.roadTexture,
       roughness: 0.82,
       metalness: 0.05,
-      side: THREE.FrontSide
+      side: THREE.DoubleSide
     });
 
     this.roadMesh = new THREE.Mesh(geom, roadMat);

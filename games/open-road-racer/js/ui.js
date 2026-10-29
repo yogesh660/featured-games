@@ -92,14 +92,27 @@ class UIController {
     }
 
     const btnStartDriving = document.getElementById('btn-start-driving');
-    if (btnStartDriving) {
-      btnStartDriving.addEventListener('click', () => {
+    const startDrivingAction = () => {
+      if (this.game && this.game.sound) {
         this.game.sound.init();
         this.game.sound.playClick();
-        this.modalOnboard.classList.remove('active');
-        this.game.resumeGame();
-      });
+      }
+      if (this.modalOnboard) this.modalOnboard.classList.remove('active');
+      if (this.game) this.game.resumeGame();
+    };
+
+    if (btnStartDriving) {
+      btnStartDriving.addEventListener('click', startDrivingAction);
     }
+
+    // Dismiss start modal immediately when player presses any driving key
+    window.addEventListener('keydown', (e) => {
+      if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+        if (this.modalOnboard && this.modalOnboard.classList.contains('active')) {
+          startDrivingAction();
+        }
+      }
+    });
 
     // Quality buttons
     const segButtons = document.querySelectorAll('.seg-btn');

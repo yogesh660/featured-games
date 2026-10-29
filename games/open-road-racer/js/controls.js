@@ -147,9 +147,8 @@ class InputManager {
     if (keyLeft || this.touchSteerLeft) targetSteer -= 1.0;
     if (keyRight || this.touchSteerRight) targetSteer += 1.0;
 
-    // Smooth inputs
-    const steerSpeed = 6.0;
-    this.keys.steer += (targetSteer - this.keys.steer) * Math.min(1.0, steerSpeed * dt);
+    // Deliver raw target inputs directly to vehicle physics engine
+    this.keys.steer = targetSteer;
     this.keys.throttle = targetThrottle;
     this.keys.brake = targetBrake;
     this.keys.handbrake = keySpace || this.touchHandbrake;

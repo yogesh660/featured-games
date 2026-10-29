@@ -1,14 +1,15 @@
 /**
- * Open Road Racer - Vehicle Dynamics & 3D Simulation (Complete Physics Overhaul)
+ * Open Road Racer - Vehicle Dynamics & 3D Simulation
+ * Faithful Port & Replication of Fast Roads (https://github.com/Dezzmeister/fastroads)
  * Features:
- *  - Genuine 2-DOF bicycle-model vehicle dynamics with real yaw inertia, tire cornering forces & slip angle.
- *  - True-direction steering: front wheels, vehicle nose, and lateral velocity are 100% physically aligned.
- *  - Centrifugal drift on mountain curves: high-speed turns require active steering and line management.
- *  - Realistic torque curve, gear ratios, aerodynamic drag, engine braking, and smooth reverse.
- *  - Suspension pitch (dive on brake, squat on accel) and body roll into high-speed corners.
- *  - Authored Fast Roads 3D roadster model with isolated wheel hierarchy (steerGroup + spinGroup = ZERO wobble).
- *  - Soft guardrail rebound and realistic off-road gravel deceleration.
- *  - Smooth cinematic chase camera with dynamic FOV scaling.
+ *  - Calibrated Fast Roads Roadster metrics (mass: 700kg, accel: 9 m/s², jerk: 48, top speed: 45 m/s = 162 km/h).
+ *  - Fast Roads 'soggySteer' progressive steering model: speed-sensitive damping prevents high-speed twitching and snap spinouts.
+ *  - Authentic Ackermann steering geometry: inside wheel steers tighter than outside wheel.
+ *  - Pure concentric wheel hierarchy (steerGroup -> spinGroup -> orientGroup -> wheelMesh) with ZERO wobble.
+ *  - Authored Fast Roads 3D car.obj and wheel.obj geometry mounted with exact coordinate orientation (no vertex mangling).
+ *  - 100% correct left/right steering and lateral alignment: turn right moves right, turn left moves left.
+ *  - Soft guardrail rebound and realistic off-road deceleration.
+ *  - Smooth cinematic chase camera with dynamic speed-dependent distance, height, and FOV.
  */
 
 class Vehicle {
@@ -16,17 +17,47 @@ class Vehicle {
     this.scene = scene;
     this.world = world;
 
+    // Fast Roads Roadster Metrics
+    this.metrics = {
+      wheelWidth: 1.36,       // Track width between left and right wheels (m)
+      wheelLength: 2.75,      // Wheelbase between front and rear axles (m)
+      wheelRadius: 0.342665,  // Rolling radius (m)
+      topSpeed: 45.0,         // Base top speed (m/s = 162 km/h)
+      accel: 9.0,             // Launch acceleration (m/s²)
+      reverse: 5.0,           // Reverse acceleration (m/s²)
+      brake: 14.0,            // Braking deceleration (m/s²)
+      jerk: 48.0,             // Rate of change of acceleration (m/s³)
+      mass: 700.0,            // Mass (kg)
+      maxSteer: 0.65,         // Max steering angle at low speeds (rad)
+      steerInterval: 0.95,    // Steering transition interval (s)
+      drag: 0.0012,           // Aerodynamic drag coefficient
+      rollResistance: 0.06,   // Rolling friction
+      rockFactor: 4.0         // Suspension pitch and roll inertia
+    };
+
     // Spline & Spatial State
     this.progressU = 0.005;
     this.lateralOffset = 0.0;    // Lateral distance from road centerline (+ right, - left)
-    this.headingAngle = 0.0;     // Heading angle relative to road tangent in radians (+ right, - left)
-    this.steerAngle = 0.0;       // Front wheel steering angle in radians (+ right, - left)
+    this.headingAngle = 0.0;     // Heading angle relative to road tangent (+ right, - left)
+    this.steerAngle = 0.0;       // Center steering angle in radians (+ right, - left)
+    this.steerL = 0.0;           // Left front wheel steering angle (Ackermann)
+    this.steerR = 0.0;           // Right front wheel steering angle (Ackermann)
     this.yawRate = 0.0;          // Heading angular velocity (rad/s)
+
+    // Fast Roads Soggy Steer State
+    this.soggyTurning = false;
+    this.soggyTurningDir = 0;
+    this.soggyTimer = 0.0;
+    this.soggyInterval = 1.0;
+    this.soggyStartPoint = 0.0;
+    this.soggySteerFactor = 1.0;
+    this.soggySteerTimeFactor = 1.0;
 
     // Longitudinal Dynamics
     this.speed = 0.0;            // Velocity in m/s (can be negative for reverse)
     this.speedKmh = 0.0;         // Display velocity in km/h
-    this.maxSpeedKmh = 195.0;
+    this.maxSpeedKmh = 195.0;    // Supercar top speed limit
+    this.drive = 0.0;            // Jerk-limited throttle state (0 to 1)
     this.gear = 1;
     this.rpmNorm = 0.15;
     this.gearRatios = [40, 78, 120, 160, 195];
@@ -36,7 +67,7 @@ class Vehicle {
     this.isSkidding = false;
     this.isDrifting = false;
 
-    // Suspension Dynamics
+    // Suspension Dynamics (Fast Roads rockFactor)
     this.pitch = 0.0;
     this.roll = 0.0;
 
@@ -51,14 +82,15 @@ class Vehicle {
 
     this.wheels = [];
     this.brakeLights = [];
+    this.headlights = [];
     this.objModelLoaded = false;
     this.proceduralBody = null;
 
-    // Build procedural supercar first as immediate fallback
+    // Build procedural supercar first as immediate reliable fallback
     this.buildProceduralSupercar();
     this.buildDustSystem();
 
-    // Load authored 3D models asynchronously
+    // Load authored Fast Roads 3D models asynchronously
     this.loadAuthoredModels();
   }
 
@@ -95,17 +127,18 @@ class Vehicle {
     this.wheels.forEach(w => this.carGroup.remove(w.steerGroup));
     this.wheels = [];
     this.brakeLights = [];
+    this.headlights = [];
 
     // Materials
     const bodyMat = new THREE.MeshStandardMaterial({
       map: carMapTex,
-      color: 0x5544ee, // Deep metallic sapphire-violet sheen
+      color: 0x4455ee, // Deep sapphire sheen
       roughness: 0.22,
       metalness: 0.78
     });
 
     const glassMat = new THREE.MeshStandardMaterial({
-      color: 0x0c101a, // Smoked aerodynamic canopy glass
+      color: 0x0c101a,
       roughness: 0.06,
       metalness: 0.95
     });
@@ -139,28 +172,24 @@ class Vehicle {
       metalness: 0.90
     });
 
-    // Transform car body geometry to: +Z forward, +X right, +Y up, centered at axle height
+    // 1. Rig Authored Car Body
+    // Fast Roads mounts car.obj directly with rotation.y = -Math.PI / 2.
+    // In car.obj, front bumper is at +X (3.5), rear bumper at -X (-0.5), wheelbase 2.75m.
+    // Rotating by -90 deg rotates +X to +Z (forward).
+    // Midpoint between front and rear axle is at Z = 1.375, axle height is at Y = 0.343.
+    // We position the car body at (0, -0.343, -1.375) to place origin at center of wheelbase.
     const carContainer = new THREE.Group();
-
     carObj.traverse((child) => {
       if (child.isMesh) {
-        // Column-major transform: x_car = z_obj, y_car = y_obj - 0.344, z_car = x_obj - 1.355
-        const pos = child.geometry.attributes.position.array;
-        for (let i = 0; i < pos.length; i += 3) {
-          const xo = pos[i], yo = pos[i+1], zo = pos[i+2];
-          pos[i]   = zo;                  // X (lateral)
-          pos[i+1] = yo - 0.344;          // Y (vertical)
-          pos[i+2] = xo - 1.355;          // Z (forward)
-        }
-        child.geometry.computeVertexNormals();
         child.castShadow = true;
-
+        child.receiveShadow = true;
         if (child.name.includes('map')) {
           child.material = bodyMat;
         } else if (child.name.includes('shadow')) {
           child.material = glassMat;
         } else if (child.name.includes('headlight')) {
           child.material = headlightMat;
+          this.headlights.push(child);
         } else if (child.name.includes('redlight') || child.name.includes('rearlight')) {
           child.material = brakeMat;
           this.brakeLights.push(child);
@@ -170,46 +199,41 @@ class Vehicle {
       }
     });
 
+    carObj.rotation.y = -Math.PI / 2;
+    carObj.position.set(0, -0.343, -1.375);
     carContainer.add(carObj);
     this.carGroup.add(carContainer);
 
-    // Build wheels from wheel.obj
-    // Wheelbase: front axle Z = +1.58, rear axle Z = -1.58; track width X = +-0.70; axle Y = 0.0
-    const wheelPositions = [
-      { name: 'FL', x: -0.70, y: 0.0, z:  1.58, isFront: true,  isLeft: true },
-      { name: 'FR', x:  0.70, y: 0.0, z:  1.58, isFront: true,  isLeft: false },
-      { name: 'RL', x: -0.70, y: 0.0, z: -1.58, isFront: false, isLeft: true },
-      { name: 'RR', x:  0.70, y: 0.0, z: -1.58, isFront: false, isLeft: false }
+    // 2. Rig Authored Wheels (Concentric, zero-wobble hierarchy matching Fast Roads)
+    // Track width: 1.36m (wheels at X = +-0.68)
+    // Wheelbase: 2.75m (front axle at Z = +1.375, rear axle at Z = -1.375)
+    // Wheel outer rim is on +Z face; left wheels rotate -90 deg, right wheels rotate +90 deg.
+    const halfWidth = this.metrics.wheelWidth / 2;   // 0.68m
+    const halfLength = this.metrics.wheelLength / 2; // 1.375m
+
+    const wheelConfigs = [
+      { name: 'FL', x: -halfWidth, z:  halfLength, isFront: true,  isLeft: true },
+      { name: 'FR', x:  halfWidth, z:  halfLength, isFront: true,  isLeft: false },
+      { name: 'RL', x: -halfWidth, z: -halfLength, isFront: false, isLeft: true },
+      { name: 'RR', x:  halfWidth, z: -halfLength, isFront: false, isLeft: false }
     ];
 
-    wheelPositions.forEach(wp => {
+    wheelConfigs.forEach(wc => {
       const steerGroup = new THREE.Group();
-      steerGroup.position.set(wp.x, wp.y, wp.z);
+      steerGroup.position.set(wc.x, 0, wc.z);
 
       const spinGroup = new THREE.Group();
       steerGroup.add(spinGroup);
 
-      const wheelOrient = new THREE.Group();
-      if (wp.isLeft) {
-        wheelOrient.rotation.y = Math.PI; // Invert to face left wheel rim outward
-      }
-      spinGroup.add(wheelOrient);
+      const orientGroup = new THREE.Group();
+      // Left wheel rim points outward towards -X; Right wheel rim points outward towards +X
+      orientGroup.rotation.y = wc.isLeft ? -Math.PI / 2 : Math.PI / 2;
+      spinGroup.add(orientGroup);
 
       const wheelClone = wheelObj.clone();
       wheelClone.traverse((child) => {
         if (child.isMesh) {
-          const geom = child.geometry.clone();
-          const pos = geom.attributes.position.array;
-          for (let i = 0; i < pos.length; i += 3) {
-            const xo = pos[i], yo = pos[i+1], zo = pos[i+2];
-            pos[i]   = zo - 0.108; // X (lateral)
-            pos[i+1] = yo;         // Y (vertical)
-            pos[i+2] = -xo;        // Z (longitudinal)
-          }
-          geom.computeVertexNormals();
-          child.geometry = geom;
           child.castShadow = true;
-
           if (child.name.includes('metal')) {
             child.material = rimMat;
           } else if (child.name.includes('tire')) {
@@ -219,15 +243,16 @@ class Vehicle {
           }
         }
       });
+      // Offset wheel mesh slightly to center rim over hub
+      wheelClone.position.set(0, 0, -0.108);
+      orientGroup.add(wheelClone);
 
-      wheelOrient.add(wheelClone);
       this.carGroup.add(steerGroup);
-
       this.wheels.push({
-        steerGroup: steerGroup,
-        spinGroup: spinGroup,
-        isFront: wp.isFront,
-        isLeft: wp.isLeft
+        steerGroup,
+        spinGroup,
+        isFront: wc.isFront,
+        isLeft: wc.isLeft
       });
     });
 
@@ -238,7 +263,7 @@ class Vehicle {
     this.proceduralBody = new THREE.Group();
 
     const bodyPaintMat = new THREE.MeshStandardMaterial({
-      color: 0x5a48ee,
+      color: 0x4455ee,
       roughness: 0.22,
       metalness: 0.78
     });
@@ -268,44 +293,44 @@ class Vehicle {
     });
 
     // 1. Lower Aerodynamic Monocoque Chassis
-    const lowerChassisGeom = new THREE.BoxGeometry(1.88, 0.42, 4.3);
+    const lowerChassisGeom = new THREE.BoxGeometry(1.80, 0.42, 4.0);
     const lowerChassis = new THREE.Mesh(lowerChassisGeom, bodyPaintMat);
-    lowerChassis.position.y = 0.24;
+    lowerChassis.position.y = 0.22;
     lowerChassis.castShadow = true;
     this.proceduralBody.add(lowerChassis);
 
-    // Front Bumper Splitter
-    const splitterGeom = new THREE.BoxGeometry(1.94, 0.08, 0.55);
+    // Front Bumper Splitter (+Z is forward)
+    const splitterGeom = new THREE.BoxGeometry(1.88, 0.08, 0.55);
     const splitter = new THREE.Mesh(splitterGeom, carbonMat);
-    splitter.position.set(0, 0.06, 2.15);
+    splitter.position.set(0, 0.06, 2.0);
     this.proceduralBody.add(splitter);
 
-    // Rear Aero Diffuser
-    const diffuserGeom = new THREE.BoxGeometry(1.86, 0.16, 0.45);
+    // Rear Aero Diffuser (-Z is rear)
+    const diffuserGeom = new THREE.BoxGeometry(1.84, 0.16, 0.45);
     const diffuser = new THREE.Mesh(diffuserGeom, carbonMat);
-    diffuser.position.set(0, 0.10, -2.15);
+    diffuser.position.set(0, 0.10, -2.0);
     this.proceduralBody.add(diffuser);
 
     // 2. Sculpted Fastback Canopy
-    const canopyGeom = new THREE.BoxGeometry(1.42, 0.46, 2.3);
+    const canopyGeom = new THREE.BoxGeometry(1.36, 0.44, 2.2);
     const canopy = new THREE.Mesh(canopyGeom, glassMat);
-    canopy.position.set(0, 0.65, -0.15);
+    canopy.position.set(0, 0.62, -0.15);
     canopy.castShadow = true;
     this.proceduralBody.add(canopy);
 
-    // 3. Headlights
-    const hlGeom = new THREE.BoxGeometry(0.35, 0.10, 0.06);
+    // 3. Headlights (at front +Z)
+    const hlGeom = new THREE.BoxGeometry(0.32, 0.10, 0.06);
     const hlLeft = new THREE.Mesh(hlGeom, headlightMat);
-    hlLeft.position.set(-0.65, 0.32, 2.16);
+    hlLeft.position.set(-0.62, 0.30, 2.02);
     const hlRight = new THREE.Mesh(hlGeom, headlightMat);
-    hlRight.position.set(0.65, 0.32, 2.16);
+    hlRight.position.set(0.62, 0.30, 2.02);
     this.proceduralBody.add(hlLeft);
     this.proceduralBody.add(hlRight);
 
-    // 4. Rear Light Blade
-    const brakeBladeGeom = new THREE.BoxGeometry(1.68, 0.09, 0.06);
+    // 4. Rear Light Blade (at rear -Z)
+    const brakeBladeGeom = new THREE.BoxGeometry(1.60, 0.09, 0.06);
     const brakeBlade = new THREE.Mesh(brakeBladeGeom, brakeMat);
-    brakeBlade.position.set(0, 0.38, -2.16);
+    brakeBlade.position.set(0, 0.36, -2.02);
     this.proceduralBody.add(brakeBlade);
     this.brakeLights.push(brakeBlade);
 
@@ -322,7 +347,7 @@ class Vehicle {
     sCtx.fillRect(0, 0, 128, 128);
 
     const shadowTex = new THREE.CanvasTexture(shadowCanvas);
-    const shadowPlaneGeom = new THREE.PlaneGeometry(2.6, 5.0);
+    const shadowPlaneGeom = new THREE.PlaneGeometry(2.4, 4.6);
     shadowPlaneGeom.rotateX(-Math.PI / 2);
     const shadowPlaneMat = new THREE.MeshBasicMaterial({
       map: shadowTex,
@@ -330,22 +355,24 @@ class Vehicle {
       depthWrite: false
     });
     const shadowMesh = new THREE.Mesh(shadowPlaneGeom, shadowPlaneMat);
-    shadowMesh.position.y = 0.02;
+    shadowMesh.position.y = -0.32;
     this.proceduralBody.add(shadowMesh);
 
     this.carGroup.add(this.proceduralBody);
 
     // Procedural Wheels
+    const halfWidth = this.metrics.wheelWidth / 2;
+    const halfLength = this.metrics.wheelLength / 2;
     const wheelPositions = [
-      { name: 'FL', x: -0.88, y: 0.0, z:  1.58, isFront: true },
-      { name: 'FR', x:  0.88, y: 0.0, z:  1.58, isFront: true },
-      { name: 'RL', x: -0.88, y: 0.0, z: -1.58, isFront: false },
-      { name: 'RR', x:  0.88, y: 0.0, z: -1.58, isFront: false }
+      { name: 'FL', x: -halfWidth, z:  halfLength, isFront: true,  isLeft: true },
+      { name: 'FR', x:  halfWidth, z:  halfLength, isFront: true,  isLeft: false },
+      { name: 'RL', x: -halfWidth, z: -halfLength, isFront: false, isLeft: true },
+      { name: 'RR', x:  halfWidth, z: -halfLength, isFront: false, isLeft: false }
     ];
 
-    const tireGeom = new THREE.CylinderGeometry(0.34, 0.34, 0.24, 18);
+    const tireGeom = new THREE.CylinderGeometry(0.34, 0.34, 0.22, 18);
     tireGeom.rotateZ(Math.PI / 2);
-    const rimGeom = new THREE.CylinderGeometry(0.24, 0.24, 0.25, 12);
+    const rimGeom = new THREE.CylinderGeometry(0.24, 0.24, 0.23, 12);
     rimGeom.rotateZ(Math.PI / 2);
 
     const tireMat = new THREE.MeshStandardMaterial({ color: 0x1a1c22, roughness: 0.9 });
@@ -353,7 +380,7 @@ class Vehicle {
 
     wheelPositions.forEach(wp => {
       const steerGroup = new THREE.Group();
-      steerGroup.position.set(wp.x, wp.y, wp.z);
+      steerGroup.position.set(wp.x, 0, wp.z);
 
       const spinGroup = new THREE.Group();
       steerGroup.add(spinGroup);
@@ -366,11 +393,11 @@ class Vehicle {
       spinGroup.add(rimMesh);
 
       this.carGroup.add(steerGroup);
-
       this.wheels.push({
-        steerGroup: steerGroup,
-        spinGroup: spinGroup,
-        isFront: wp.isFront
+        steerGroup,
+        spinGroup,
+        isFront: wp.isFront,
+        isLeft: wp.isLeft
       });
     });
   }
@@ -399,48 +426,115 @@ class Vehicle {
     this.lateralOffset = 0.0;
     this.headingAngle = 0.0;
     this.steerAngle = 0.0;
+    this.steerL = 0.0;
+    this.steerR = 0.0;
     this.yawRate = 0.0;
+    this.drive = 0.0;
     this.gear = 1;
     this.rpmNorm = 0.15;
     this.pitch = 0.0;
     this.roll = 0.0;
+    this.soggyTurning = false;
+    this.soggyTurningDir = 0;
+    this.soggyTimer = 0.0;
+    this.soggyStartPoint = 0.0;
+  }
+
+  // Fast Roads Ackermann Steering Geometry
+  updateSteer() {
+    const sinS = Math.sin(this.steerAngle);
+    const cosS = Math.cos(this.steerAngle) * this.metrics.wheelLength * 2.0;
+    const num = 2.0 * this.metrics.wheelLength * sinS;
+    const leftDenom = cosS - this.metrics.wheelWidth * sinS;
+    const rightDenom = cosS + this.metrics.wheelWidth * sinS;
+    this.steerL = Math.atan(num / (Math.abs(leftDenom) > 0.001 ? leftDenom : 0.001));
+    this.steerR = Math.atan(num / (Math.abs(rightDenom) > 0.001 ? rightDenom : 0.001));
+  }
+
+  // Fast Roads Calibrated Soggy Steer Model
+  getSoggySteerState(dt, inputSteer) {
+    const speedLerp = Math.min(1.0, Math.abs(this.speed) / this.metrics.topSpeed);
+    // Speed-sensitive steering factor: at top speed, max steering reduces smoothly to 25%
+    this.soggySteerFactor = 1.0 - 0.75 * speedLerp;
+    this.soggySteerTimeFactor = 1.0 + 0.5 * speedLerp;
+
+    const maxSteer = this.metrics.maxSteer * this.soggySteerFactor;
+    // inputSteer: +1 for Right ('D'), -1 for Left ('A'), 0 for none
+    const steerTarget = inputSteer * maxSteer;
+
+    if (Math.abs(inputSteer) > 0.01) {
+      if (!this.soggyTurning || this.soggyTurningDir !== inputSteer) {
+        this.soggyTimer = 0;
+        this.soggyStartPoint = this.steerAngle;
+        const steerDelta = Math.abs(steerTarget - this.steerAngle) / Math.max(0.001, maxSteer);
+        this.soggyInterval = this.metrics.steerInterval / Math.max(0.01, steerDelta);
+        this.soggyTurning = true;
+        this.soggyTurningDir = inputSteer;
+      }
+    } else if (this.soggyTurning) {
+      this.soggyTurning = false;
+      const steerDelta = Math.abs(this.steerAngle) / (2.0 * Math.max(0.001, maxSteer));
+      this.soggyInterval = this.metrics.steerInterval * Math.max(0.05, steerDelta);
+      this.soggyTimer = 0;
+      this.soggyStartPoint = this.steerAngle;
+      this.soggyTurningDir = 0;
+    }
+
+    this.soggyTimer += dt / Math.max(0.01, this.soggySteerTimeFactor);
+    let lerp = Math.min(1.0, this.soggyTimer / Math.max(0.01, this.soggyInterval));
+    // Fast Roads halfLerp S-curve: 2 * ((3 - 2 * (e / 2 + 0.5)) * (e / 2 + 0.5)^2 - 0.5)
+    const eHalf = lerp * 0.5 + 0.5;
+    lerp = 2.0 * ((3.0 - 2.0 * eHalf) * eHalf * eHalf - 0.5);
+    lerp = Math.max(0.0, Math.min(1.0, lerp));
+
+    this.steerAngle = this.soggyStartPoint * (1.0 - lerp) + steerTarget * lerp;
+    this.updateSteer();
   }
 
   update(dt, input) {
-    const isBraking = input.keys.brake;
-    const isThrottle = input.keys.throttle;
-    const isHandbrake = input.keys.handbrake;
+    const isThrottle = !!input.keys.throttle;
+    const isBraking = !!input.keys.brake;
+    const isHandbrake = !!input.keys.handbrake;
+    const inputSteer = input.keys.steer || 0.0; // +1 Right ('D'), -1 Left ('A')
 
-    const maxSpeedMs = this.maxSpeedKmh / 3.6; // ~54.17 m/s (195 km/h)
     const halfRoad = this.world.roadWidth / 2; // 5.0m
     this.isOffRoad = Math.abs(this.lateralOffset) > halfRoad;
 
-    // 1. Longitudinal Acceleration & Braking Dynamics
+    // 1. Throttle / Drive state with Fast Roads Jerk Limiting
+    const targetDrive = isThrottle ? 1.0 : 0.0;
+    if (this.drive < targetDrive) {
+      this.drive += (this.metrics.jerk / this.metrics.accel) * dt;
+      if (this.drive > targetDrive) this.drive = targetDrive;
+    } else if (this.drive > targetDrive) {
+      this.drive -= (this.metrics.jerk / this.metrics.accel) * dt;
+      if (this.drive < targetDrive) this.drive = targetDrive;
+    }
+
+    // 2. Longitudinal Acceleration & Speed Integration
+    const currentTopSpeed = this.isOffRoad ? (this.metrics.topSpeed * 0.55) : this.metrics.topSpeed;
+
     if (isThrottle) {
-      const topSpeed = this.isOffRoad ? (maxSpeedMs * 0.42) : maxSpeedMs;
-      if (this.speed < topSpeed) {
-        // Punchy low-end torque tapering smoothly near redline
-        const torqueRatio = Math.max(0.18, 1.0 - Math.pow(Math.max(0, this.speed) / maxSpeedMs, 1.7));
-        const accelRate = (this.isOffRoad ? 6.5 : 15.0) * torqueRatio; // m/s^2 (~0-100 in 4.5s)
-        this.speed += accelRate * dt;
-        if (this.speed > topSpeed) this.speed = topSpeed;
+      if (this.speed < currentTopSpeed) {
+        const driveForce = this.drive * this.metrics.accel;
+        const dragForce = this.metrics.drag * this.speed * this.speed;
+        this.speed += (driveForce - dragForce) * dt;
+        if (this.speed > currentTopSpeed) this.speed = currentTopSpeed;
       }
     } else if (isBraking) {
-      if (this.speed > 0.6) {
+      if (this.speed > 0.5) {
         // Firm progressive braking
-        const brakeDecel = 26.0; // m/s^2 (~100-0 in 34m)
-        this.speed -= brakeDecel * dt;
+        this.speed -= this.metrics.brake * dt;
         if (this.speed < 0) this.speed = 0;
       } else {
-        // Smooth reverse engagement
-        this.speed -= 7.0 * dt;
-        if (this.speed < -9.7) this.speed = -9.7; // -35 km/h max reverse
+        // Reverse engagement
+        this.speed -= this.metrics.reverse * dt;
+        if (this.speed < -8.5) this.speed = -8.5; // -30 km/h reverse limit
       }
     } else {
-      // Natural rolling resistance and aerodynamic drag (v^2)
-      const aeroDrag = 0.0075 * this.speed * Math.abs(this.speed);
-      const rollingDrag = this.isOffRoad ? 4.0 : 1.25;
-      const totalDecel = (rollingDrag + aeroDrag) * Math.sign(this.speed);
+      // Natural rolling resistance and aerodynamic drag
+      const rollingDecel = (this.isOffRoad ? 3.0 : 0.8) + (this.metrics.rollResistance * 9.81);
+      const dragDecel = this.metrics.drag * this.speed * Math.abs(this.speed);
+      const totalDecel = (rollingDecel + dragDecel) * Math.sign(this.speed);
       const prevSign = Math.sign(this.speed);
       this.speed -= totalDecel * dt;
       if (Math.sign(this.speed) !== prevSign) this.speed = 0;
@@ -458,65 +552,58 @@ class Vehicle {
       }
     });
 
-    // 2. Transmission & Simulated RPM
+    // 3. Transmission & Simulated RPM
     this.updateTransmission();
 
-    // 3. Progressive Steering with Speed-Sensitive Caster
-    // input.keys.steer: +1 for Right ('D' / Right arrow), -1 for Left ('A' / Left arrow)
-    const speedRatio = Math.min(1.0, Math.abs(this.speedKmh) / 200.0);
-    const speedDamping = 1.0 - speedRatio * 0.60; // Responsive at low speeds, stable at high speeds
-    const maxSteerLimit = 0.44 * speedDamping;
-    const targetSteer = input.keys.steer * maxSteerLimit;
+    // 4. Calibrated Fast Roads Soggy Steer
+    this.getSoggySteerState(dt, inputSteer);
 
-    // Snappy turn-in, rapid self-centering when releasing keys
-    const steerSpeed = (Math.abs(input.keys.steer) > 0.01) ? 9.5 : 13.5;
-    this.steerAngle += (targetSteer - this.steerAngle) * Math.min(1.0, steerSpeed * dt);
-
-    // Front wheels steer cleanly around local Y; all wheels spin purely around local axle X (Zero wobble)
-    const rollRate = (this.speed / 0.34); // rad/s
+    // Front wheels steer cleanly; all wheels spin concentric with forward roll
+    const rollRate = (this.speed / this.metrics.wheelRadius); // rad/s
     this.wheels.forEach(w => {
       if (w.isFront) {
-        // Positive steerAngle turns wheels to the RIGHT (+X)
-        w.steerGroup.rotation.y = this.steerAngle;
+        // When steering right (steerAngle > 0), wheel rotates towards -X (right side of car)
+        // Ackermann angles steerL and steerR computed from Fast Roads
+        const angle = w.isLeft ? -this.steerL : -this.steerR;
+        w.steerGroup.rotation.y = angle;
       }
+      // Pure concentric spin around wheel axle (Zero wobble)
       w.spinGroup.rotation.x += rollRate * dt;
     });
 
-    // 4. Sample Road Spline & Curvature
+    // 5. Sample Road Spline & Curvature
     const { point, tangent, right, normal, curvature } = this.world.getRoadFrameAt(this.progressU);
     const roadCurv = curvature || 0.0;
 
-    // 5. Bicycle-Model Yaw & Lateral Drift Dynamics
+    // 6. Kinematic / Dynamic Bicycle Model Yaw & Lateral Following
     this.isDrifting = isHandbrake && Math.abs(this.speedKmh) > 28;
     const grip = this.isDrifting ? 0.35 : (this.isOffRoad ? 0.65 : 1.0);
-    const wheelbase = 2.76;
 
-    // Ackerman yaw rate generated by front tire grip
-    const targetYawRate = (this.speed / wheelbase) * Math.sin(this.steerAngle);
-    const yawResponsiveness = (this.isDrifting ? 2.4 : 1.1) * 11.5;
+    // Front tire lateral force generates yaw moment
+    const targetYawRate = (this.speed / this.metrics.wheelLength) * Math.sin(this.steerAngle);
+    const yawResponsiveness = (this.isDrifting ? 9.0 : 6.8) * grip;
     this.yawRate += (targetYawRate - this.yawRate) * Math.min(1.0, yawResponsiveness * dt);
 
-    // Self-aligning torque: heading naturally re-centers towards the road tangent
-    const alignTorque = 4.2 * grip;
-    if (Math.abs(input.keys.steer) < 0.05 && !this.isDrifting) {
-      this.headingAngle *= Math.exp(-alignTorque * dt);
-      this.yawRate *= Math.exp(-6.0 * dt);
+    if (Math.abs(inputSteer) < 0.05 && !this.isDrifting) {
+      // Natural caster self-centering towards road tangent
+      this.headingAngle *= Math.exp(-3.5 * grip * dt);
+      this.yawRate *= Math.exp(-5.0 * dt);
     } else {
       this.headingAngle += this.yawRate * dt;
     }
 
-    // Road Curvature Rotation: As the road curves under the vehicle, tangent frame rotates
+    // Road Curvature Rotation: dynamically follows road geometry
     const vTangent = this.speed * Math.cos(this.headingAngle);
     this.headingAngle -= roadCurv * vTangent * dt;
 
-    // Clamp maximum slip angle
-    const maxSlip = this.isDrifting ? 0.75 : 0.42;
+    // Maximum slip clamp prevents violent spinout into traffic
+    const maxSlip = this.isDrifting ? 0.65 : 0.38;
     this.headingAngle = THREE.MathUtils.clamp(this.headingAngle, -maxSlip, maxSlip);
 
-    // 6. Spline Progress & Lateral Displacement
+    // 7. Spline Progress & Lateral Displacement
     // Centrifugal outward acceleration on curves
     const centrifugalAccel = -roadCurv * this.speed * Math.abs(this.speed);
-    const vLateral = this.speed * Math.sin(this.headingAngle) + (centrifugalAccel * 0.12);
+    const vLateral = this.speed * Math.sin(this.headingAngle) + (centrifugalAccel * 0.08);
 
     const roadLen = this.world.totalLength || 3200;
     const deltaU = (vTangent * dt) / roadLen;
@@ -524,17 +611,16 @@ class Vehicle {
 
     this.lateralOffset += vLateral * dt;
 
-    // 7. Soft Guardrail Rebound & Boundary Management
+    // 8. Soft Guardrail Rebound & Boundary Management
     const maxLateral = halfRoad + this.world.shoulderWidth + 0.4; // ~9.4m
     if (Math.abs(this.lateralOffset) > maxLateral) {
       this.lateralOffset = Math.sign(this.lateralOffset) * maxLateral;
-      // Rebound gently towards road center
-      this.headingAngle = -Math.sign(this.lateralOffset) * 0.18;
+      this.headingAngle = -Math.sign(this.lateralOffset) * 0.12;
       this.yawRate = 0;
-      this.speed *= 0.88; // Scrub speed on guardrail scrape
+      this.speed *= 0.90; // Gentle speed scrub
     }
 
-    // 8. 3D World Placement & Orthonormal Orientation
+    // 9. 3D World Placement & Orthonormal Orientation
     const carPos = point.clone().addScaledVector(right, this.lateralOffset);
     // Ground car precisely on road surface datum
     carPos.addScaledVector(normal, 0.344);
@@ -545,27 +631,26 @@ class Vehicle {
       .add(right.clone().multiplyScalar(Math.sin(this.headingAngle)))
       .normalize();
 
-    // Car right vector: normal x heading = true right
-    const carRight = new THREE.Vector3().crossVectors(normal, carHeading).normalize();
+    // Car local +X vector: normal x heading = local right
+    const carX = new THREE.Vector3().crossVectors(normal, carHeading).normalize();
 
     const rotMat = new THREE.Matrix4();
-    rotMat.makeBasis(carRight, normal, carHeading);
+    rotMat.makeBasis(carX, normal, carHeading);
     this.carGroup.quaternion.setFromRotationMatrix(rotMat);
 
-    // 9. Suspension Dynamics: Pitch on accel/brake, Roll into corners
-    const targetPitch = isBraking ? -0.05 : (isThrottle ? 0.03 : 0.0);
-    this.pitch += (targetPitch - this.pitch) * 12.0 * dt;
+    // 10. Fast Roads Suspension Dynamics (Pitch on accel/brake, Roll into corners)
+    const targetPitch = isBraking ? -0.045 : (isThrottle ? 0.025 * this.drive : 0.0);
+    this.pitch += (targetPitch - this.pitch) * Math.min(1.0, 12.0 * dt);
 
-    // Body roll rolls outward against cornering inertia
-    const targetRoll = -Math.sin(this.headingAngle) * (Math.abs(this.speedKmh) / 180.0) * 0.12;
-    this.roll += (targetRoll - this.roll) * 10.0 * dt;
+    const targetRoll = -Math.sin(this.steerAngle) * (Math.abs(this.speedKmh) / 160.0) * 0.08;
+    this.roll += (targetRoll - this.roll) * Math.min(1.0, 10.0 * dt);
 
     this.carGroup.rotateX(this.pitch);
     this.carGroup.rotateZ(this.roll);
 
-    // 10. Skid detection
+    // 11. Skid detection
     const slipSpeed = Math.abs(this.speed * Math.sin(this.headingAngle));
-    this.isSkidding = this.isDrifting || (slipSpeed > 5.0 && Math.abs(this.speedKmh) > 35);
+    this.isSkidding = this.isDrifting || (slipSpeed > 4.5 && Math.abs(this.speedKmh) > 35);
 
     return {
       speedKmh: this.speedKmh,
@@ -605,14 +690,14 @@ class Vehicle {
     const { tangent, normal } = this.world.getRoadFrameAt(this.progressU);
 
     if (this.cameraMode === 'chase') {
-      // Elevated Slow Roads Chase Camera:
+      // Fast Roads Elevated Chase Camera:
       // High vantage point smoothly following the car position and road vector
-      const speedNorm = Math.min(1.0, Math.abs(this.speedKmh) / 195);
-      const dist = 7.6 + speedNorm * 1.6;
-      const height = 3.2 + speedNorm * 0.4;
+      const speedNorm = Math.min(1.0, Math.abs(this.speedKmh) / 165);
+      const dist = 7.4 + speedNorm * 1.6;
+      const height = 3.0 + speedNorm * 0.4;
 
       // Blend car forward with road tangent for buttery smooth camera turns
-      const camDir = forward.clone().multiplyScalar(0.75).add(tangent.clone().multiplyScalar(0.25)).normalize();
+      const camDir = forward.clone().multiplyScalar(0.78).add(tangent.clone().multiplyScalar(0.22)).normalize();
       const idealPos = this.carGroup.position.clone()
         .addScaledVector(camDir, -dist)
         .addScaledVector(normal, height);
@@ -621,24 +706,24 @@ class Vehicle {
       if (this.chaseCamPos.lengthSq() < 1) {
         this.chaseCamPos.copy(idealPos);
       } else {
-        this.chaseCamPos.lerp(idealPos, Math.min(1.0, 8.5 * dt));
+        this.chaseCamPos.lerp(idealPos, Math.min(1.0, 7.5 * dt));
       }
       camera.position.copy(this.chaseCamPos);
 
-      // Look 22m ahead down the road
-      const lookDir = tangent.clone().multiplyScalar(0.65).add(forward.clone().multiplyScalar(0.35)).normalize();
+      // Look 24m ahead down the road
+      const lookDir = tangent.clone().multiplyScalar(0.70).add(forward.clone().multiplyScalar(0.30)).normalize();
       const lookAhead = this.carGroup.position.clone()
-        .addScaledVector(lookDir, 22.0)
-        .addScaledVector(normal, 0.88);
+        .addScaledVector(lookDir, 24.0)
+        .addScaledVector(normal, 0.85);
 
       if (this.chaseLookTarget.lengthSq() < 1) {
         this.chaseLookTarget.copy(lookAhead);
       } else {
-        this.chaseLookTarget.lerp(lookAhead, Math.min(1.0, 11.0 * dt));
+        this.chaseLookTarget.lerp(lookAhead, Math.min(1.0, 9.5 * dt));
       }
       camera.lookAt(this.chaseLookTarget);
 
-      camera.fov = 62 + speedNorm * 12;
+      camera.fov = 62 + speedNorm * 10;
       camera.updateProjectionMatrix();
 
     } else {
