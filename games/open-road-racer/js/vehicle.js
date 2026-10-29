@@ -18,88 +18,82 @@ class Vehicle {
     // Vehicle catalogue specifications ported directly from Slow Roads
     this.VEHICLE_DEFS = {
       roadster: {
-        id: 'roadster',
         name: 'Roadster',
-        category: 'Sports Roadster',
-        description: 'Agile 2-seat lightweight mountain sports car',
+        type: 'car',
         mass: 700,
-        accel: 9.0,
-        reverse: 5.0,
-        jerk: 64.0,
-        brake: 8.0,
+        accel: 9,
+        brake: 8,
+        reverse: 5,
+        jerk: 64,
         maxSteer: 0.68,
         steerSpeed: 1.57,
-        steerSpeedFactor: 0.65,
-        steerInterval: 1.0,
-        topSpeed: 45.0,     // 162 km/h (100 mph)
-        wheelLength: 2.75,  // Wheelbase
-        wheelWidth: 1.36,   // Track width
+        steerAccel: 12,
+        topSpeed: 45, // m/s = 162 km/h
         wheelRadius: 0.342665,
+        wheelWidth: 1.36,
+        wheelLength: 2.75,
         axleHeight: 0.342665,
         rollResistance: 0.06,
         drag: 0.001,
         cameras: {
-          chase:    { distance: 5.2, height: 1.55, fov: 62, pitch: 0.08 },
-          chaseFar: { distance: 8.5, height: 2.80, fov: 65, pitch: 0.12 },
-          cockpit:  { offset: new THREE.Vector3(0.32, 0.74, 0.10), fov: 72 },
-          hood:     { offset: new THREE.Vector3(0.00, 0.68, 1.35), fov: 70 }
+          chase:    { distance: 6.4, height: 2.10, lookAtHeight: 1.05, lookAtDist: 9.0, fov: 60 },
+          chaseFar: { distance: 9.5, height: 3.20, lookAtHeight: 1.10, lookAtDist: 12.0, fov: 65 },
+          cockpit:  { offset: new THREE.Vector3(0.00, 1.15, 0.40), fov: 72 },
+          hood:     { offset: new THREE.Vector3(0.00, 0.90, 1.10), fov: 70
         }
+      }
       },
       coach: {
-        id: 'coach',
         name: 'Coach',
-        category: 'Heavy Touring Bus',
-        description: 'Heavy 40-passenger luxury tour coach with panoramic views',
+        type: 'bus',
         mass: 1400,
-        accel: 6.0,
-        reverse: 5.0,
-        jerk: 12.0,
-        brake: 5.0,
-        maxSteer: 0.62,
-        steerSpeed: 0.50,
-        steerSpeedFactor: 0.70,
-        steerInterval: 2.0,
-        topSpeed: 32.0,     // 115 km/h (72 mph)
-        wheelLength: 5.47,  // Extended wheelbase
-        wheelWidth: 2.24,   // Wide commercial bus track
+        accel: 6,
+        brake: 4,
+        reverse: 5,
+        jerk: 12,
+        maxSteer: 0.65,
+        steerSpeed: 0.45,
+        steerAccel: 6,
+        topSpeed: 30, // m/s = 108 km/h
         wheelRadius: 0.3955,
+        wheelWidth: 2.24,
+        wheelLength: 5.47,
         axleHeight: 0.3955,
         rollResistance: 0.03,
         drag: 0.002,
         cameras: {
-          chase:    { distance: 11.5, height: 3.8, fov: 64, pitch: 0.10 },
-          chaseFar: { distance: 17.0, height: 5.8, fov: 68, pitch: 0.14 },
-          cockpit:  { offset: new THREE.Vector3(0.65, 1.85, 3.8), fov: 75 },
-          hood:     { offset: new THREE.Vector3(0.00, 1.40, 4.8), fov: 70 }
+          chase:    { distance: 18.0, height: 5.80, lookAtHeight: 2.20, lookAtDist: 14.0, fov: 62 },
+          chaseFar: { distance: 26.0, height: 8.50, lookAtHeight: 2.40, lookAtDist: 18.0, fov: 66 },
+          cockpit:  { offset: new THREE.Vector3(0.65, 2.10, 4.40), fov: 75 },
+          hood:     { offset: new THREE.Vector3(0.00, 1.60, 5.20), fov: 70
         }
+      }
       },
       bike: {
-        id: 'bike',
         name: 'Superbike',
-        category: '1000cc Racing Bike',
-        description: 'High-revving superbike with extreme acceleration & dynamic lean',
-        mass: 350,
-        accel: 12.0,
-        reverse: 4.0,
-        jerk: 48.0,
-        brake: 9.0,
+        type: 'bike',
+        mass: 700,
+        accel: 11,
+        brake: 8,
+        reverse: 5,
+        jerk: 48,
         maxSteer: 0.40,
-        steerSpeed: 1.80,
-        steerSpeedFactor: 0.55,
-        steerInterval: 1.8,
-        topSpeed: 53.0,     // 190 km/h (120 mph)
-        wheelLength: 1.95,  // Compact motorcycle wheelbase
-        wheelWidth: 0.0,    // Single inline track
+        steerSpeed: 1.57,
+        steerAccel: 8,
+        topSpeed: 53, // m/s = 190 km/h
         wheelRadius: 0.26,
+        wheelWidth: 0,
+        wheelLength: 1.95,
         axleHeight: 0.26,
         rollResistance: 0.04,
         drag: 0.001,
         cameras: {
-          chase:    { distance: 4.2, height: 1.35, fov: 62, pitch: 0.07 },
-          chaseFar: { distance: 7.2, height: 2.20, fov: 65, pitch: 0.10 },
-          cockpit:  { offset: new THREE.Vector3(0.00, 0.88, 0.15), fov: 72 },
-          hood:     { offset: new THREE.Vector3(0.00, 0.72, 0.80), fov: 70 }
+          chase:    { distance: 5.4, height: 1.85, lookAtHeight: 0.90, lookAtDist: 8.5, fov: 60 },
+          chaseFar: { distance: 8.2, height: 2.80, lookAtHeight: 1.00, lookAtDist: 11.0, fov: 65 },
+          cockpit:  { offset: new THREE.Vector3(0.00, 1.05, 0.20), fov: 72 },
+          hood:     { offset: new THREE.Vector3(0.00, 0.95, 0.85), fov: 70
         }
+      }
       }
     };
 
@@ -179,10 +173,10 @@ class Vehicle {
    * Asset Loading & Showroom Materials (Matching Slow Roads)
    * ------------------------------------------------------------- */
   loadAuthoredModels() {
-    if (typeof THREE.OBJLoader === 'undefined') {
-      this.rebuildCurrentVehicle();
-      return;
-    }
+    // Build procedural fallback immediately so vehicle renders on frame 1
+    this.rebuildCurrentVehicle();
+
+    if (typeof THREE.OBJLoader === 'undefined') return;
 
     const objLoader = new THREE.OBJLoader();
     const texLoader = new THREE.TextureLoader();
@@ -208,8 +202,10 @@ class Vehicle {
             this.cachedAssets.dashObj = dashObj;
           });
 
-          // Build default Roadster
-          this.buildRoadster();
+          // Swap in authored Roadster if active
+          if (this.currentVehicleType === 'roadster') {
+            this.rebuildCurrentVehicle();
+          }
         }, undefined, () => this.rebuildCurrentVehicle());
       }, undefined, () => this.rebuildCurrentVehicle());
     }, undefined, () => this.rebuildCurrentVehicle());
@@ -417,6 +413,88 @@ class Vehicle {
         isLeft: wc.isLeft
       });
     });
+  }
+
+  buildProceduralRoadster() {
+    const carContainer = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({
+      color: 0xdde2ea,
+      roughness: 0.35,
+      metalness: 0.45
+    });
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x111624,
+      roughness: 0.1,
+      transmission: 0.7,
+      transparent: true
+    });
+    const tireMat = new THREE.MeshStandardMaterial({ color: 0x1e2026, roughness: 0.88 });
+    const rimMat = new THREE.MeshStandardMaterial({ color: 0xd8dde4, roughness: 0.22, metalness: 0.85 });
+
+    const bodyGeom = new THREE.BoxGeometry(1.36, 0.50, 3.8);
+    const bodyMesh = new THREE.Mesh(bodyGeom, bodyMat);
+    bodyMesh.position.set(0, 0.10, 0);
+    bodyMesh.castShadow = true;
+    carContainer.add(bodyMesh);
+
+    const cabinGeom = new THREE.BoxGeometry(1.10, 0.42, 1.8);
+    const cabinMesh = new THREE.Mesh(cabinGeom, glassMat);
+    cabinMesh.position.set(0, 0.45, -0.2);
+    cabinMesh.castShadow = true;
+    carContainer.add(cabinMesh);
+
+    const hlMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfffaea, emissiveIntensity: 1.5 });
+    const hlGeom = new THREE.BoxGeometry(0.24, 0.08, 0.04);
+    const hlL = new THREE.Mesh(hlGeom, hlMat);
+    hlL.position.set(-0.46, 0.15, 1.91);
+    const hlR = new THREE.Mesh(hlGeom, hlMat);
+    hlR.position.set(0.46, 0.15, 1.91);
+    carContainer.add(hlL, hlR);
+    this.headlights.push(hlL, hlR);
+
+    const blMat = new THREE.MeshStandardMaterial({ color: 0x660204, emissive: 0xff0011, emissiveIntensity: 0.8 });
+    const blGeom = new THREE.BoxGeometry(0.35, 0.08, 0.04);
+    const blL = new THREE.Mesh(blGeom, blMat);
+    blL.position.set(-0.44, 0.20, -1.91);
+    const blR = new THREE.Mesh(blGeom, blMat);
+    blR.position.set(0.44, 0.20, -1.91);
+    carContainer.add(blL, blR);
+    this.brakeLights.push(blL, blR);
+
+    const createProcWheel = () => {
+      const g = new THREE.Group();
+      const tg = new THREE.CylinderGeometry(this.metrics.wheelRadius, this.metrics.wheelRadius, 0.22, 24);
+      tg.rotateZ(Math.PI / 2);
+      const tm = new THREE.Mesh(tg, tireMat);
+      tm.castShadow = true;
+      g.add(tm);
+      const rg = new THREE.CylinderGeometry(this.metrics.wheelRadius * 0.6, this.metrics.wheelRadius * 0.6, 0.23, 16);
+      rg.rotateZ(Math.PI / 2);
+      const rm = new THREE.Mesh(rg, rimMat);
+      g.add(rm);
+      return g;
+    };
+
+    const halfW = this.metrics.wheelWidth / 2;
+    const halfL = this.metrics.wheelLength / 2;
+    const configs = [
+      { x: -halfW, z:  halfL, isFront: true },
+      { x:  halfW, z:  halfL, isFront: true },
+      { x: -halfW, z: -halfL, isFront: false },
+      { x:  halfW, z: -halfL, isFront: false }
+    ];
+
+    configs.forEach(cfg => {
+      const steerGroup = new THREE.Group();
+      steerGroup.position.set(cfg.x, 0, cfg.z);
+      const spinGroup = new THREE.Group();
+      steerGroup.add(spinGroup);
+      spinGroup.add(createProcWheel());
+      carContainer.add(steerGroup);
+      this.wheels.push({ steerGroup, spinGroup, isFront: cfg.isFront });
+    });
+
+    this.bodyContainer.add(carContainer);
   }
 
   /* -------------------------------------------------------------
@@ -628,6 +706,31 @@ class Vehicle {
       emissive: 0xff0011,
       emissiveIntensity: 0.8
     });
+
+    // Sculptured fuel tank & trellis frame
+    // Engine block & mechanical trellis core
+    const engineGeom = new THREE.BoxGeometry(0.32, 0.42, 0.65);
+    const engine = new THREE.Mesh(engineGeom, frameMat);
+    engine.position.set(0, 0.38, 0.10);
+    engine.castShadow = true;
+    bikeGroup.add(engine);
+
+    // Front inverted telescopic forks
+    const forkGeom = new THREE.CylinderGeometry(0.024, 0.024, 0.82, 12);
+    const forkL = new THREE.Mesh(forkGeom, chromeMat);
+    forkL.position.set(-0.10, 0.45, 0.70);
+    forkL.rotation.x = -0.32;
+    const forkR = new THREE.Mesh(forkGeom, chromeMat);
+    forkR.position.set(0.10, 0.45, 0.70);
+    forkR.rotation.x = -0.32;
+    bikeGroup.add(forkL, forkR);
+
+    // Rear swingarm linking axle to frame
+    const armGeom = new THREE.BoxGeometry(0.20, 0.08, 0.80);
+    const arm = new THREE.Mesh(armGeom, frameMat);
+    arm.position.set(0, 0.18, -0.48);
+    arm.rotation.x = 0.18;
+    bikeGroup.add(arm);
 
     // Sculptured fuel tank & trellis frame
     const tankGeom = new THREE.BoxGeometry(0.44, 0.38, 0.85);
@@ -1116,9 +1219,11 @@ class Vehicle {
         .addScaledVector(forward, -dist)
         .addScaledVector(up, height);
 
+      const lookDist = camPreset.lookAtDist || 8.0;
+      const lookHeight = camPreset.lookAtHeight || 1.1;
       targetLookAt.copy(carPos)
-        .addScaledVector(forward, 8.0)
-        .addScaledVector(up, 0.4);
+        .addScaledVector(forward, lookDist)
+        .addScaledVector(up, lookHeight);
     } else if (this.cameraMode === 'cockpit') {
       // Driver cockpit view
       const off = camPreset.offset;

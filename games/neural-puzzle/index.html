@@ -3,54 +3,317 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Neural Puzzle — Featured Games</title>
-  <link rel="stylesheet" href="../../site.css">
+  <meta name="theme-color" content="#07090e">
+  <title>Neural Puzzle: Synaptic Relay — Featured Games</title>
+  <meta name="description" content="A minimalist futuristic logic game about routing neural signals through a synthetic cortex. Complete circuits, trigger AND logic gates, and ignite synaptic receptors.">
+  <link rel="stylesheet" href="css/neural-puzzle.css">
 </head>
 <body>
-  <nav id="nav">
-    <a class="mark" href="../../index.html">YA<span>.</span></a>
-    <div class="navlinks">
-      <a href="../../index.html">All Games</a>
-      <a href="../open-road-racer/index.html">Open Road Racer</a>
-      <span class="nav-badge">Stage 3 Pipeline</span>
-    </div>
-  </nav>
 
-  <div class="container">
-    <div class="hero">
-      <span class="kicker">Game 03 · Logic & Pattern Solving</span>
-      <h1>Neural Puzzle</h1>
-      <p>A minimalist futuristic logic game about routing neural signals through nodes. Rotate and align conduits to complete continuous circuits under energy constraints.</p>
+  <!-- Top Navigation Bar -->
+  <header class="np-nav">
+    <div class="np-nav-left">
+      <a class="np-mark" href="../../index.html">YA<span>.</span></a>
+      <div class="np-breadcrumb">
+        <a href="../../index.html">Featured Games</a>
+        <span>/</span>
+        <span style="color: #fff; font-weight: 500;">Neural Puzzle</span>
+      </div>
+    </div>
+    <div class="np-nav-right">
+      <button class="np-btn" id="dailyBtn" title="Play Today's Synchronized Daily Puzzle">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Daily Pulse
+      </button>
+      <button class="np-btn" id="sandboxBtn" title="Generate Infinite Procedural Puzzles">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Sandbox
+      </button>
+      <button class="np-btn" id="guideBtn" title="How to Play & Mechanics Guide">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Guide
+      </button>
+      <button class="np-btn" id="settingsBtn" title="Sound and Visual Settings">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Game Layout -->
+  <main class="np-main">
+    
+    <!-- HUD Panel -->
+    <section class="np-hud">
+      <div class="np-hud-top">
+        <div class="np-level-info">
+          <span class="np-kicker" id="hudSectorKicker">Sector 1 · Synthetic Awakening</span>
+          <h1 class="np-level-title" id="hudLevelTitle">Axon Ignition</h1>
+          <p class="np-level-desc" id="hudLevelDesc">Rotate conduits to establish a continuous synaptic channel between Soma and Receptor.</p>
+        </div>
+
+        <div class="np-stats-row">
+          <div class="np-stat-item">
+            <span class="np-stat-label">Moves</span>
+            <span class="np-stat-value" id="hudMoves">0</span>
+          </div>
+          <div class="np-stat-item">
+            <span class="np-stat-label">Par</span>
+            <span class="np-stat-value" id="hudPar">2</span>
+          </div>
+          <div class="np-stat-item">
+            <span class="np-stat-label">Time</span>
+            <span class="np-stat-value" id="hudTimer">0:00</span>
+          </div>
+          <div class="np-stat-item">
+            <span class="np-stat-label">Receptors</span>
+            <span class="np-stat-value" id="hudTargets" style="color: var(--neon-cyan);">0 / 1</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Controls -->
+      <div class="np-hud-controls">
+        <div class="np-controls-left">
+          <button class="np-btn" id="levelsBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Levels (26)
+          </button>
+          <button class="np-btn" id="undoBtn" title="Undo last rotation (U or Ctrl+Z)" disabled>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            Undo
+          </button>
+          <button class="np-btn" id="resetBtn" title="Reset puzzle to initial state (R)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            Reset
+          </button>
+        </div>
+
+        <div class="np-controls-right">
+          <button class="np-btn np-btn-primary" id="hintBtn" title="Reveal the next critical misaligned tile (H)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"/></svg>
+            Hint
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Canvas Stage -->
+    <div class="np-canvas-container">
+      <canvas id="neuralCanvas"></canvas>
+      <div class="np-toast" id="hintToast">Hint message appears here</div>
     </div>
 
-    <div class="featured-card">
-      <div class="featured-content">
-        <div>
-          <div class="badge-live" style="background: rgba(154, 154, 165, 0.12); color: var(--muted); border-color: var(--line);">
-            <div class="pulse-dot" style="background: var(--muted); box-shadow: 0 0 8px var(--muted);"></div> Scheduled in Daily Pipeline
+  </main>
+
+  <!-- Level Select Modal -->
+  <div class="np-modal-overlay" id="levelsModal">
+    <div class="np-modal">
+      <div class="np-modal-header">
+        <h2 class="np-modal-title">Cortex Level Database (26 Levels)</h2>
+        <button class="np-modal-close" onclick="document.getElementById('levelsModal').classList.remove('active')">&times;</button>
+      </div>
+      <div class="np-modal-body" id="levelsGridContainer">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Victory Win Modal -->
+  <div class="np-modal-overlay" id="winModal">
+    <div class="np-modal" style="max-width: 480px; text-align: center;">
+      <div class="np-modal-header" style="justify-content: center; border-bottom: none; padding-top: 24px;">
+        <h2 class="np-modal-title" style="font-size: 24px; color: var(--neon-cyan);">Synapse Synchronized!</h2>
+      </div>
+      <div class="np-modal-body">
+        <p style="color: var(--text-muted); font-size: 14px;">All action potentials and target synaptic receptors are fully energized.</p>
+
+        <div class="win-stars" id="winStars">★★★</div>
+
+        <div class="win-stats-grid">
+          <div class="win-stat-box">
+            <div class="np-stat-label">Moves Taken</div>
+            <div class="np-stat-value" id="winMoves">3</div>
           </div>
-          <div class="featured-title">Under Automated Daily Development</div>
-          <p class="featured-desc">
-            Complete design specification saved in <code>docs/neural-puzzle-gdd.md</code>. Development will proceed through signal traversal validation, tutorial packs, 20 curated levels, and deterministic daily seeds.
-          </p>
-          <div class="feature-tags">
-            <span class="feature-tag">CSS Grid</span>
-            <span class="feature-tag">Graph Traversal</span>
-            <span class="feature-tag">20 Authored Levels</span>
-            <span class="feature-tag">Deterministic Daily Seed</span>
+          <div class="win-stat-box">
+            <div class="np-stat-label">Time Elapsed</div>
+            <div class="np-stat-value" id="winTime">0:14</div>
           </div>
-          <div style="display:flex; gap:12px;">
-            <a href="../open-road-racer/index.html" class="btn btn-primary">Play Open Road Racer (Ready)</a>
-            <a href="../../index.html" class="btn btn-secondary">← Back to Hub</a>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 10px;">
+          <button class="np-btn" id="winReplayBtn">↺ Replay</button>
+          <button class="np-btn np-btn-primary" id="winNextBtn">Next Level →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Infinite Sandbox Modal -->
+  <div class="np-modal-overlay" id="sandboxModal">
+    <div class="np-modal" style="max-width: 520px;">
+      <div class="np-modal-header">
+        <h2 class="np-modal-title">Infinite Neural Matrix Sandbox</h2>
+        <button class="np-modal-close" onclick="document.getElementById('sandboxModal').classList.remove('active')">&times;</button>
+      </div>
+      <div class="np-modal-body">
+        <p style="color: var(--text-muted); font-size: 13px;">Generate procedural, guaranteed-solvable circuit puzzles on demand.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label class="np-stat-label">Grid Dimensions</label>
+          <div style="display: flex; gap: 8px;">
+            <button class="np-btn size-opt" data-size="3">3 x 3</button>
+            <button class="np-btn size-opt" data-size="4">4 x 4</button>
+            <button class="np-btn size-opt np-btn-primary" data-size="5">5 x 5</button>
+            <button class="np-btn size-opt" data-size="6">6 x 6</button>
+            <button class="np-btn size-opt" data-size="7">7 x 7</button>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label class="np-stat-label">Complexity Level</label>
+          <div style="display: flex; gap: 8px;">
+            <button class="np-btn diff-opt" data-diff="casual">Casual</button>
+            <button class="np-btn diff-opt np-btn-primary" data-diff="medium">Adept</button>
+            <button class="np-btn diff-opt" data-diff="expert">Master</button>
+          </div>
+        </div>
+
+        <button class="np-btn np-btn-primary" id="genSandboxBtn" style="justify-content: center; padding: 12px; margin-top: 8px;">
+          ⚡ Generate Neural Network
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="np-modal-overlay" id="settingsModal">
+    <div class="np-modal" style="max-width: 520px;">
+      <div class="np-modal-header">
+        <h2 class="np-modal-title">Neural Settings & Visual Themes</h2>
+        <button class="np-modal-close" onclick="document.getElementById('settingsModal').classList.remove('active')">&times;</button>
+      </div>
+      <div class="np-modal-body">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label class="np-stat-label">Visual Theme</label>
+          <div class="theme-options-grid">
+            <div class="theme-card" data-theme="cyber">
+              <span>Cyber Cortex</span>
+              <span style="display:flex; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#00f3ff;"></span><span style="width:10px;height:10px;border-radius:50%;background:#ec4899;"></span></span>
+            </div>
+            <div class="theme-card" data-theme="bio">
+              <span>Bio-Cortex</span>
+              <span style="display:flex; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#10b981;"></span><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;"></span></span>
+            </div>
+            <div class="theme-card" data-theme="quantum">
+              <span>Quantum Lattice</span>
+              <span style="display:flex; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#38bdf8;"></span><span style="width:10px;height:10px;border-radius:50%;background:#ffffff;"></span></span>
+            </div>
+            <div class="theme-card" data-theme="solar">
+              <span>Solar Synapse</span>
+              <span style="display:flex; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;"></span><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;"></span></span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+          <label class="np-stat-label">Web Audio Synthesizer</label>
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span>Mute Sound</span>
+            <input type="checkbox" id="muteToggle" style="cursor: pointer; transform: scale(1.3);">
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <footer>
-    <div>Yogesh Awate · Featured Games Collection</div>
-    <a href="https://yogesh660.github.io" target="_blank">yogesh660.github.io ↗</a>
-  </footer>
+  <!-- How to Play Guide Modal -->
+  <div class="np-modal-overlay" id="guideModal">
+    <div class="np-modal">
+      <div class="np-modal-header">
+        <h2 class="np-modal-title">Neural Architecture Handbook</h2>
+        <button class="np-modal-close" onclick="document.getElementById('guideModal').classList.remove('active')">&times;</button>
+      </div>
+      <div class="np-modal-body" style="font-size: 14px; line-height: 1.6; color: #cbd5e1;">
+        <h3 style="color: var(--neon-cyan); margin-bottom: 4px;">Objective</h3>
+        <p>Rotate the neural conduits to establish continuous pathways from <strong>Action Potential Somata (Sources)</strong> to all <strong>Synaptic Receptors (Targets)</strong>.</p>
+
+        <h3 style="color: var(--neon-cyan); margin-top: 14px; margin-bottom: 4px;">Controls</h3>
+        <ul style="margin-left: 20px; display: flex; flex-direction: column; gap: 6px;">
+          <li><strong>Left-Click / Tap:</strong> Rotate tile 90° clockwise.</li>
+          <li><strong>Right-Click:</strong> Rotate tile 90° counter-clockwise.</li>
+          <li><strong>WASD / Arrow Keys:</strong> Move grid selection cursor.</li>
+          <li><strong>Space / Enter:</strong> Rotate selected tile.</li>
+          <li><strong>U / Ctrl+Z:</strong> Undo last turn.</li>
+          <li><strong>R:</strong> Reset puzzle.</li>
+          <li><strong>H:</strong> Intelligent Hint.</li>
+        </ul>
+
+        <h3 style="color: var(--neon-cyan); margin-top: 14px; margin-bottom: 4px;">Synaptic Components</h3>
+        <ul style="margin-left: 20px; display: flex; flex-direction: column; gap: 6px;">
+          <li><strong>Quantum Bridge:</strong> Transmits two signals right across each other without collision.</li>
+          <li><strong>Logic AND Gate (&):</strong> Only fires an output signal once TWO incoming active signals cross its threshold simultaneously!</li>
+          <li><strong>Frequency Transmuter:</strong> Shifts the signal frequency (e.g. from Cyan to Magenta) to satisfy multi-channel receptors.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/simulator.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/generator.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/game.js"></script>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      window.game = new NeuralGame();
+
+      // Hook up sandbox modal selectors
+      let selectedSandboxSize = 5;
+      let selectedSandboxDiff = 'medium';
+
+      document.querySelectorAll('.size-opt').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.size-opt').forEach(b => b.classList.remove('np-btn-primary'));
+          btn.classList.add('np-btn-primary');
+          selectedSandboxSize = parseInt(btn.dataset.size, 10);
+        });
+      });
+
+      document.querySelectorAll('.diff-opt').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.diff-opt').forEach(b => b.classList.remove('np-btn-primary'));
+          btn.classList.add('np-btn-primary');
+          selectedSandboxDiff = btn.dataset.diff;
+        });
+      });
+
+      document.getElementById('genSandboxBtn').addEventListener('click', () => {
+        window.game.generateCustomSandbox(selectedSandboxSize, selectedSandboxDiff);
+      });
+
+      // Hook up theme buttons in settings
+      document.querySelectorAll('.theme-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const themeId = card.dataset.theme;
+          window.game.setTheme(themeId);
+          document.getElementById('settingsModal').classList.remove('active');
+        });
+      });
+
+      // Mute toggle
+      const muteBox = document.getElementById('muteToggle');
+      if (muteBox) {
+        muteBox.checked = window.game.audio.muted;
+        muteBox.addEventListener('change', () => {
+          window.game.audio.setMuted(muteBox.checked);
+          window.game.progress.muted = muteBox.checked;
+          window.game.saveProgress();
+        });
+      }
+    });
+  </script>
 </body>
 </html>

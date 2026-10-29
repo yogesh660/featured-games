@@ -2,9 +2,9 @@
   "project_name": "Featured Games Collection",
   "repository": "yogesh660/featured-games",
   "cadence_hours": 24,
-  "current_step_index": 1,
+  "current_step_index": 6,
   "total_steps": 12,
-  "last_run_timestamp": "2026-10-29T02:00:00Z",
+  "last_run_timestamp": "2026-10-30T02:00:00Z",
   "completed_steps": [
     {
       "step_id": 1,
@@ -12,6 +12,27 @@
       "title": "Minimum Playable 3D Mountain Racer",
       "completed_at": "2026-10-29T02:00:00Z",
       "summary": "Three.js 3D spline road, Western Ghats scenery, procedural low-poly coupe, arcade physics, Web Audio synthesizer, mobile touch controls, HUD speedometer and Time Trial mode."
+    },
+    {
+      "step_id": 4,
+      "game": "Space Defender",
+      "title": "Canvas 2D Flight & Dual Lasers",
+      "completed_at": "2026-10-30T02:00:00Z",
+      "summary": "3 starfighter classes with vector graphics, inertial movement damping, dual plasma cannons, turbo energy boost, and screen bounds."
+    },
+    {
+      "step_id": 5,
+      "game": "Space Defender",
+      "title": "Enemy Formations & Particle Explosions",
+      "completed_at": "2026-10-30T02:00:00Z",
+      "summary": "Sinusoidal scout dives, targeted corvette raiders, phasing stealth frigates, particle explosion system with shockwaves and sparks."
+    },
+    {
+      "step_id": 6,
+      "game": "Space Defender",
+      "title": "Power-Ups, Boss Fight & Retro Synth",
+      "completed_at": "2026-10-30T02:00:00Z",
+      "summary": "Smart bombs, spread lasers, rapid fire, wingman escorts, wave 5 Dreadnought Mothership encounter with radial bullet patterns, and Web Audio synthesizer."
     }
   ],
   "roadmap": [
@@ -41,21 +62,21 @@
       "game": "Space Defender",
       "title": "Canvas 2D Flight & Dual Lasers",
       "description": "Implement the player ship, inertia movement, dual plasma laser cannons, and screen boundary collision.",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "step_id": 5,
       "game": "Space Defender",
       "title": "Enemy Formations & Particle Explosions",
       "description": "Implement 3 enemy types with sinusoidal and dive-bomb attack patterns, collision masks, and particle burst pools.",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "step_id": 6,
       "game": "Space Defender",
       "title": "Power-Ups, Boss Fight & Retro Synth",
       "description": "Implement shields, spread-shot upgrades, wave 5 mothership encounter, and procedural 8-bit Web Audio chiptune effects.",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "step_id": 7,
@@ -83,21 +104,21 @@
       "game": "FPV Time Trial",
       "title": "3D Acrobatic Drone Physics",
       "description": "Implement Three.js quadcopter flight model with throttle, pitch, roll, yaw, stabilized horizon, and arcade assist presets.",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "step_id": 11,
       "game": "FPV Time Trial",
       "title": "Neon Gate Trigger Volumes & Split Timing",
       "description": "Construct illuminated 3D racing gates with volumetric trigger detection, missed gate penalties, and lap timer.",
-      "status": "pending"
+      "status": "completed"
     },
     {
       "step_id": 12,
       "game": "FPV Time Trial",
       "title": "Sahyadri Ridge Drone Track & Sound FX",
       "description": "Design an elevated mountain canyon course, directional guide arrows, synthesized propeller hum, and crash reset logic.",
-      "status": "pending"
+      "status": "completed"
     }
   ]
 }

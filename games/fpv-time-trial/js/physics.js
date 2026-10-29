@@ -1,8 +1,8 @@
 /**
  * 6-DOF FPV Quadcopter Aerodynamic & Flight Dynamics Physics Engine
  * Supports ACRO (Rate), ANGLE (Self-Level), and HORIZON flight modes.
- * Integrates Betaflight rate curves, motor spool-up latency, quadratic aerodynamic drag,
- * prop disc momentum drag, and collision response.
+ * Integrates Betaflight actual rate curves, motor spool latency, anisotropic aerodynamic drag,
+ * prop wash turbulence, ground effect cushion, and collision response.
  */
 
 class FpvPhysics {
@@ -109,14 +109,13 @@ class FpvPhysics {
 
   /**
    * Main Physics Tick
-   * Sub-stepped for maximum numeric stability (e.g., 2 sub-steps of dt/2)
+   * Sub-stepped for maximum numeric stability
    * 
    * @param {number} dt - frame time delta in seconds
    * @param {Object} inputs - { throttle: 0..1, roll: -1..1, pitch: -1..1, yaw: -1..1 }
    */
   update(dt, inputs) {
     if (dt <= 0) return;
-    // Clamp delta to avoid huge physics spikes on tab switch
     const clampedDt = Math.min(dt, 0.05);
 
     // Sub-stepping (2 steps for high precision flight fidelity)
@@ -141,7 +140,6 @@ class FpvPhysics {
 
   _physicsStep(dt, inputs) {
     if (this.isCrashed) {
-      // Rapidly damp down velocities when crashed
       this.velocity.multiplyScalar(0.85);
       this.angularVelocity.multiplyScalar(0.85);
       this.position.addScaledVector(this.velocity, dt);
@@ -170,39 +168,31 @@ class FpvPhysics {
     const targetAngVel = this._tempV1.set(0, 0, 0);
 
     if (this.mode === 'ACRO') {
-      // ACRO / RATE MODE:
-      // Betaflight actual rates map stick input directly to target angular velocity (deg/s)
+      // ACRO / RATE MODE: Betaflight actual rates map stick input directly to target angular velocity (deg/s)
       const targetRollDeg = this.rates.getRate('roll', inputs.roll);
       const targetPitchDeg = this.rates.getRate('pitch', inputs.pitch);
       const targetYawDeg = this.rates.getRate('yaw', inputs.yaw);
 
-      // Pitch is local X, Yaw is local Y, Roll is local Z
       targetAngVel.set(
         -targetPitchDeg * DEG_TO_RAD,
         -targetYawDeg * DEG_TO_RAD,
          targetRollDeg * DEG_TO_RAD
       );
 
-      // Fast PID angular convergence
-      const rotSnappiness = 28.0; // quadcopters have extreme torque-to-inertia
+      const rotSnappiness = 28.0;
       this.angularVelocity.x += (targetAngVel.x - this.angularVelocity.x) * Math.min(1.0, rotSnappiness * dt);
       this.angularVelocity.y += (targetAngVel.y - this.angularVelocity.y) * Math.min(1.0, rotSnappiness * dt);
       this.angularVelocity.z += (targetAngVel.z - this.angularVelocity.z) * Math.min(1.0, rotSnappiness * dt);
 
     } else if (this.mode === 'ANGLE') {
-      // ANGLE / LEVEL MODE:
-      // Sticks map to target attitude angles. Centers auto-level!
+      // ANGLE / LEVEL MODE: Sticks map to target attitude angles
       const maxAngleRad = (this.spec.maxTiltAngle || 45) * DEG_TO_RAD;
       const targetPitchAngle = -inputs.pitch * maxAngleRad;
       const targetRollAngle  =  inputs.roll  * maxAngleRad;
 
-      // Extract current Euler angles from quaternion
       this._euler.setFromQuaternion(this.quaternion, 'YXZ');
 
-      // Proportional self-leveling controller (P-gain)
       const pGain = 9.0;
-      const dGain = 0.75;
-      
       const pitchError = targetPitchAngle - this._euler.x;
       const rollError  = targetRollAngle  - this._euler.z;
 
@@ -215,10 +205,9 @@ class FpvPhysics {
       this.angularVelocity.y += (targetAngVel.y - this.angularVelocity.y) * Math.min(1.0, 20.0 * dt);
 
     } else if (this.mode === 'HORIZON') {
-      // HORIZON MODE: Self-levels near center, allows full acro flips when sticks pushed > 80%
+      // HORIZON MODE: Self-levels near center, acro flips when sticks pushed > 80%
       const stickMag = Math.sqrt(inputs.roll * inputs.roll + inputs.pitch * inputs.pitch);
       if (stickMag > 0.8) {
-        // High stick deflection -> Acro rates
         const targetRollDeg = this.rates.getRate('roll', inputs.roll);
         const targetPitchDeg = this.rates.getRate('pitch', inputs.pitch);
         targetAngVel.set(
@@ -228,7 +217,6 @@ class FpvPhysics {
         );
         this.angularVelocity.lerp(targetAngVel, Math.min(1.0, 25.0 * dt));
       } else {
-        // Self-level near center
         const maxAngleRad = (this.spec.maxTiltAngle || 45) * DEG_TO_RAD;
         this._euler.setFromQuaternion(this.quaternion, 'YXZ');
         const pitchError = (-inputs.pitch * maxAngleRad) - this._euler.x;
@@ -246,7 +234,6 @@ class FpvPhysics {
     this.angularVelocity.multiplyScalar(Math.pow(this.spec.rotationalDamping || 0.8, dt * 60));
 
     // Integrate quaternion from angular velocity in body frame
-    // dq = 0.5 * q * [0, wx, wy, wz]
     const deltaAngle = this._tempV1.copy(this.angularVelocity).multiplyScalar(dt);
     const angleMag = deltaAngle.length();
     if (angleMag > 1e-6) {
@@ -267,25 +254,23 @@ class FpvPhysics {
     const localUp = this._tempV2.set(0, 1, 0).applyQuaternion(this.quaternion);
     let thrustMag = this.currentThrustPercent * this.spec.maxThrustN;
 
-    // Ground Effect: Cushion when hovering very close to floor
-    if (this.position.y < 0.35 && this.position.y > 0.05) {
-      const geRatio = 1.0 + (0.20 * Math.max(0, 1.0 - (this.position.y / 0.35)));
+    // Ground Effect Cushion: when hovering close to floor
+    if (this.position.y < 0.40 && this.position.y > 0.05) {
+      const geRatio = 1.0 + (0.24 * Math.max(0, 1.0 - (this.position.y / 0.40)));
       thrustMag *= geRatio;
     }
 
-    // Angle mode tilt compensation (keeps altitude stable during banking turns)
+    // Angle mode tilt compensation
     if (this.mode === 'ANGLE' && localUp.y > 0.1) {
       thrustMag *= (1.0 + Math.max(0, 1.0 - localUp.y) * 0.55);
     }
 
     totalForce.addScaledVector(localUp, thrustMag);
 
-    // 3. Aerodynamic Drag
-    // Parasite Drag: Fd = -0.5 * rho * Cd * A * v^2
+    // 3. Aerodynamic Drag & Prop Wash
     const speed = this.velocity.length();
     if (speed > 1e-4) {
       const airDensity = 1.225; // kg/m^3
-      // Project velocity into local quad body coordinates for anisotropic drag
       const worldToBodyQ = this._tempQ1.copy(this.quaternion).invert();
       const localVel = this.velocity.clone().applyQuaternion(worldToBodyQ);
 
@@ -296,14 +281,23 @@ class FpvPhysics {
       const localDrag = new this.THREE.Vector3(dragX, dragY, dragZ);
       const worldDrag = localDrag.applyQuaternion(this.quaternion);
       totalForce.add(worldDrag);
+
+      // Prop Wash Turbulence: Vortex ring state oscillation when descending into dirty prop downwash
+      if (localVel.y < -1.8 && this.currentThrustPercent > 0.18) {
+        const washIntensity = Math.min(1.0, (-localVel.y - 1.8) * 0.25) * 0.85;
+        const washFreq = 22.0;
+        const washRoll = Math.sin(this.flightTimeSeconds * washFreq * 2 * Math.PI) * 0.035 * washIntensity;
+        const washPitch = Math.cos(this.flightTimeSeconds * (washFreq + 3) * 2 * Math.PI) * 0.025 * washIntensity;
+        this.angularVelocity.z += washRoll;
+        this.angularVelocity.x += washPitch;
+      }
     }
 
     // 4. Integrate Linear Acceleration and Velocity
-    // a = F / m
     this.acceleration.copy(totalForce).divideScalar(this.spec.mass);
     this.velocity.addScaledVector(this.acceleration, dt);
 
-    // Integrate Position: x = x + v * dt
+    // Integrate Position
     this.position.addScaledVector(this.velocity, dt);
   }
 
@@ -315,18 +309,14 @@ class FpvPhysics {
     if (this.position.y <= r) {
       this.position.y = r;
       
-      // If crashing at high velocity or upside down
       const upDot = this._tempV2.set(0, 1, 0).applyQuaternion(this.quaternion).y;
       if ((impactSpeed > 9.0 && upDot < 0.2) || upDot < -0.3) {
-        // Hard crash upside down
         this.isCrashed = true;
         this.velocity.set(0, 0, 0);
       } else {
-        // Normal ground bounce / contact
         if (this.velocity.y < 0) {
-          this.velocity.y = -this.velocity.y * 0.22; // Low restitution bounce
+          this.velocity.y = -this.velocity.y * 0.22;
         }
-        // Ground friction
         this.velocity.x *= 0.82;
         this.velocity.z *= 0.82;
         this.angularVelocity.multiplyScalar(0.70);
@@ -338,44 +328,36 @@ class FpvPhysics {
 
     // 2. Obstacle / Box Collider Checks
     for (let i = 0; i < this.colliders.length; i++) {
-      const box = this.colliders[i]; // THREE.Box3
+      const box = this.colliders[i];
       if (box.containsPoint(this.position) || box.distanceToPoint(this.position) < r) {
-        // Find closest point on box
         const closest = box.clampPoint(this.position, this._tempV1);
         const normal = this._tempV2.subVectors(this.position, closest);
         const dist = normal.length();
 
         if (dist < 1e-4) {
-          // Inside collider - push out along dominant velocity axis
           normal.copy(this.velocity).negate().normalize();
         } else {
           normal.normalize();
         }
 
-        // Push position outside
         this.position.copy(closest).addScaledVector(normal, r + 0.01);
 
-        // Crash check if high kinetic impact
         if (impactSpeed > 14.0) {
           this.isCrashed = true;
           this.velocity.set(0, 0, 0);
           return;
         }
 
-        // Elastic bounce with friction
         const velDotNormal = this.velocity.dot(normal);
         if (velDotNormal < 0) {
-          this.velocity.addScaledVector(normal, -1.35 * velDotNormal); // Bounce
-          this.velocity.multiplyScalar(0.75); // Impact friction loss
+          this.velocity.addScaledVector(normal, -1.35 * velDotNormal);
+          this.velocity.multiplyScalar(0.75);
           this.angularVelocity.multiplyScalar(0.60);
         }
       }
     }
   }
 
-  /**
-   * Register AABB colliders from environment meshes
-   */
   setColliders(box3Array) {
     this.colliders = box3Array || [];
   }
