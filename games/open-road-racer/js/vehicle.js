@@ -611,19 +611,24 @@ class Vehicle {
 
     this.lateralOffset += vLateral * dt;
 
-    // 8. Soft Guardrail Rebound & Boundary Management
-    const maxLateral = halfRoad + this.world.shoulderWidth + 0.4; // ~9.4m
-    if (Math.abs(this.lateralOffset) > maxLateral) {
-      this.lateralOffset = Math.sign(this.lateralOffset) * maxLateral;
-      this.headingAngle = -Math.sign(this.lateralOffset) * 0.12;
+    // 8. Open Mountain Exploration Boundary Management
+    // Players can roam freely across the expansive 520m wide mountain terrain corridor!
+    const maxExplorationRange = 260.0; // 260m open exploration zone
+    if (Math.abs(this.lateralOffset) > maxExplorationRange) {
+      this.lateralOffset = Math.sign(this.lateralOffset) * maxExplorationRange;
+      this.headingAngle = -Math.sign(this.lateralOffset) * 0.14;
       this.yawRate = 0;
-      this.speed *= 0.90; // Gentle speed scrub
+      this.speed *= 0.92;
     }
 
-    // 9. 3D World Placement & Orthonormal Orientation
+    // 9. 3D World Placement & Continuous Terrain Grounding
+    const groundHeightOffset = (this.world && this.world.getGroundHeightAt)
+      ? this.world.getGroundHeightAt(this.progressU, this.lateralOffset)
+      : 0.05;
+
     const carPos = point.clone().addScaledVector(right, this.lateralOffset);
-    // Ground car precisely on road surface datum
-    carPos.addScaledVector(normal, 0.344);
+    // Ground car precisely on road surface or undulating hill terrain
+    carPos.addScaledVector(normal, groundHeightOffset + 0.344);
     this.carGroup.position.copy(carPos);
 
     // Heading vector in 3D: blends road tangent and car heading angle
@@ -638,7 +643,14 @@ class Vehicle {
     rotMat.makeBasis(carX, normal, carHeading);
     this.carGroup.quaternion.setFromRotationMatrix(rotMat);
 
-    // 10. Fast Roads Suspension Dynamics (Pitch on accel/brake, Roll into corners)
+    // 10. Fast Roads Suspension Dynamics & Terrain Slope Conformity
+    let terrainCrossSlope = 0;
+    if (this.world && this.world.getGroundHeightAt && this.isOffRoad) {
+      const hRight = this.world.getGroundHeightAt(this.progressU, this.lateralOffset + 1.2);
+      const hLeft  = this.world.getGroundHeightAt(this.progressU, this.lateralOffset - 1.2);
+      terrainCrossSlope = Math.atan2(hRight - hLeft, 2.4);
+    }
+
     const targetPitch = isBraking ? -0.045 : (isThrottle ? 0.025 * this.drive : 0.0);
     this.pitch += (targetPitch - this.pitch) * Math.min(1.0, 12.0 * dt);
 
@@ -646,7 +658,30 @@ class Vehicle {
     this.roll += (targetRoll - this.roll) * Math.min(1.0, 10.0 * dt);
 
     this.carGroup.rotateX(this.pitch);
-    this.carGroup.rotateZ(this.roll);
+    this.carGroup.rotateZ(this.roll + terrainCrossSlope);
+
+    // Update off-road dust particles
+    if (this.dustParticles && this.dustParticles.geometry) {
+      const isDustActive = (this.isOffRoad || this.isSkidding) && Math.abs(this.speedKmh) > 12;
+      this.dustParticles.material.opacity = isDustActive ? 0.65 : 0.0;
+      if (isDustActive) {
+        const pArr = this.dustParticles.geometry.attributes.position.array;
+        const forward3D = this.getForwardVector();
+        for (let k = 0; k < pArr.length; k += 3) {
+          if (Math.random() < 0.25) {
+            const side = (Math.random() > 0.5 ? 1 : -1) * 0.7;
+            const rearPos = carPos.clone()
+              .addScaledVector(forward3D, -1.8)
+              .addScaledVector(right, side)
+              .addScaledVector(normal, 0.15 + Math.random() * 0.2);
+            pArr[k] = rearPos.x + (Math.random() - 0.5) * 0.4;
+            pArr[k+1] = rearPos.y + Math.random() * 0.3;
+            pArr[k+2] = rearPos.z + (Math.random() - 0.5) * 0.4;
+          }
+        }
+        this.dustParticles.geometry.attributes.position.needsUpdate = true;
+      }
+    }
 
     // 11. Skid detection
     const slipSpeed = Math.abs(this.speed * Math.sin(this.headingAngle));

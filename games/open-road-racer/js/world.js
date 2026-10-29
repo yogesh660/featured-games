@@ -155,6 +155,47 @@ class WorldGenerator {
     return { point, tangent, right, normal, curvature };
   }
 
+  getGroundHeightAt(u, latOffset) {
+    const normU = ((u % 1.0) + 1.0) % 1.0;
+    const hillWaveL = Math.sin(normU * Math.PI * 8) * 20;
+    const hillWaveR = Math.cos(normU * Math.PI * 6) * 18;
+
+    const curbEdge = this.roadWidth / 2 + this.curbWidth;        // 5.55m
+    const shoulderEdge = curbEdge + this.shoulderWidth;         // 9.55m
+
+    const spanOffsets = [
+      -280, -110, -32, -shoulderEdge, -curbEdge,
+      curbEdge, shoulderEdge, 32, 110, 280
+    ];
+
+    const profileNormalOffsets = [
+      hillWaveL + 28,             // Far Left peak (-280m)
+      (hillWaveL * 0.45) + 8,     // Mid Left slope (-110m)
+      (hillWaveL * 0.15) + 1.6,   // Near Left hill (-32m)
+      0.02,                       // Left shoulder outer (-9.55m)
+      0.10,                       // Left shoulder inner (-5.55m)
+      0.10,                       // Right shoulder inner (+5.55m)
+      0.02,                       // Right shoulder outer (+9.55m)
+      (hillWaveR * 0.15) + 1.6,   // Near Right hill (+32m)
+      (hillWaveR * 0.45) + 8,     // Mid Right slope (+110m)
+      hillWaveR - 14              // Far Right valley (+280m)
+    ];
+
+    if (Math.abs(latOffset) <= this.roadWidth / 2) return 0.05;
+    if (Math.abs(latOffset) <= curbEdge) return 0.10;
+
+    if (latOffset <= spanOffsets[0]) return profileNormalOffsets[0];
+    if (latOffset >= spanOffsets[spanOffsets.length - 1]) return profileNormalOffsets[profileNormalOffsets.length - 1];
+
+    for (let k = 0; k < spanOffsets.length - 1; k++) {
+      if (latOffset >= spanOffsets[k] && latOffset <= spanOffsets[k + 1]) {
+        const frac = (latOffset - spanOffsets[k]) / (spanOffsets[k + 1] - spanOffsets[k]);
+        return profileNormalOffsets[k] * (1 - frac) + profileNormalOffsets[k + 1] * frac;
+      }
+    }
+    return 0.05;
+  }
+
   createRoadTexture() {
     // 1. High-Resolution procedural fallback (2048x2048) with anti-aliasing
     const canvas = document.createElement('canvas');
@@ -447,25 +488,32 @@ class WorldGenerator {
     const offset = this.roadWidth / 2 + this.curbWidth + 0.4;
     const height = 0.72;
 
-    for (let i = 0; i <= segments; i++) {
-      const u = (i / segments) % 1.0;
-      const { point, right, normal } = this.getRoadFrameAt(u);
+    // Place guardrails strictly on steep cliff overhang curves, leaving the open mountain passes fully accessible
+    let vertCount = 0;
+    for (let i = 0; i < segments; i++) {
+      const u1 = (i / segments) % 1.0;
+      const u2 = ((i + 1) / segments) % 1.0;
 
-      const base = point.clone().addScaledVector(right, offset).addScaledVector(normal, 0.05);
-      const top = base.clone().addScaledVector(normal, height);
+      // Only build guardrail on hairpin drop-off passes (e.g. u between 0.38-0.48 and 0.72-0.82)
+      const hasCliff = (u1 > 0.38 && u1 < 0.48) || (u1 > 0.72 && u1 < 0.82);
+      if (!hasCliff) continue;
 
-      positions.push(base.x, base.y, base.z);
-      positions.push(top.x, top.y, top.z);
+      const f1 = this.getRoadFrameAt(u1);
+      const f2 = this.getRoadFrameAt(u2);
 
-      if (i < segments) {
-        const v1 = i * 2;
-        const v2 = i * 2 + 1;
-        const v3 = (i + 1) * 2;
-        const v4 = (i + 1) * 2 + 1;
+      const base1 = f1.point.clone().addScaledVector(f1.right, offset).addScaledVector(f1.normal, 0.05);
+      const top1  = base1.clone().addScaledVector(f1.normal, height);
+      const base2 = f2.point.clone().addScaledVector(f2.right, offset).addScaledVector(f2.normal, 0.05);
+      const top2  = base2.clone().addScaledVector(f2.normal, height);
 
-        indices.push(v1, v3, v2);
-        indices.push(v2, v3, v4);
-      }
+      positions.push(base1.x, base1.y, base1.z);
+      positions.push(top1.x, top1.y, top1.z);
+      positions.push(base2.x, base2.y, base2.z);
+      positions.push(top2.x, top2.y, top2.z);
+
+      indices.push(vertCount, vertCount + 1, vertCount + 2);
+      indices.push(vertCount + 1, vertCount + 3, vertCount + 2);
+      vertCount += 4;
     }
 
     geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
