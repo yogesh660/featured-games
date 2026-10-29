@@ -41,6 +41,42 @@ const DRONE_SPECS = {
     accentColor: '#10b981'
   },
 
+  meteor75: {
+    id: 'meteor75',
+    name: 'Meteor 75 Pro',
+    subtitle: '75mm 2S Brushless Power Whoop',
+    category: 'Power Whoop',
+    badge: 'Micro Racing Beast',
+    description: 'Aggressive 75mm 2S micro whoop. Blends the safety of circular ducted props with 2S punch-out thrust for ripping fast living-room lines and outdoor garden gaps.',
+    
+    mass: 0.046,             // 46g
+    twr: 6.8,                // 6.8:1
+    maxThrustN: 0.046 * 9.81 * 6.8, // ~3.07 N
+    
+    linearDragCoeff: 0.72,
+    axialDragCoeff: 0.30,
+    transverseDragCoeff: 1.05,
+    
+    rotationalInertia: { x: 0.00024, y: 0.00028, z: 0.00036 },
+    rotationalDamping: 0.80,
+    
+    motorResponseTau: 0.032,
+    
+    defaultCameraTilt: 28,
+    cameraFov: 118,
+    maxTiltAngle: 50,
+    
+    batteryCells: 2,         // 2S
+    batteryVoltageNom: 8.70,
+    batteryCapacityMah: 450,
+    
+    topSpeedKmh: 72,
+    soundProfile: { baseFreq: 340, maxFreq: 1180, whineIntensity: 0.70 },
+    
+    themeColor: '#06b6d4',
+    accentColor: '#3b82f6'
+  },
+
   cinewhoop25: {
     id: 'cinewhoop25',
     name: 'CineBumble 2.5',
@@ -111,6 +147,42 @@ const DRONE_SPECS = {
     
     themeColor: '#ec4899',   // Pink / Fuchsia
     accentColor: '#f43f5e'
+  },
+
+  phantom35: {
+    id: 'phantom35',
+    name: 'Phantom Micro 3.5',
+    subtitle: '3.5-Inch 4S Sub-250g Freestyle Quad',
+    category: 'Freestyle Micro',
+    badge: 'Modern Sweet Spot',
+    description: 'The modern gold standard of freestyle agility and silence. Featherweight sub-250g frame carries high momentum through gaps with near-silent high-efficiency triblades.',
+    
+    mass: 0.210,             // 210g
+    twr: 10.5,               // 10.5:1
+    maxThrustN: 0.210 * 9.81 * 10.5, // ~21.6 N
+    
+    linearDragCoeff: 0.32,
+    axialDragCoeff: 0.15,
+    transverseDragCoeff: 0.38,
+    
+    rotationalInertia: { x: 0.0012, y: 0.0015, z: 0.0020 },
+    rotationalDamping: 0.74,
+    
+    motorResponseTau: 0.034,
+    
+    defaultCameraTilt: 35,
+    cameraFov: 125,
+    maxTiltAngle: 58,
+    
+    batteryCells: 4,         // 4S
+    batteryVoltageNom: 16.8,
+    batteryCapacityMah: 850,
+    
+    topSpeedKmh: 135,
+    soundProfile: { baseFreq: 220, maxFreq: 1280, whineIntensity: 0.78 },
+    
+    themeColor: '#10b981',   // Emerald
+    accentColor: '#059669'
   },
 
   apex5racer: {
@@ -188,14 +260,19 @@ class DroneModelBuilder {
 
     const ledRed = new THREE.MeshBasicMaterial({ color: 0xff2244 });
     const ledGreen = new THREE.MeshBasicMaterial({ color: 0x22ff66 });
+    const ledCyan = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
     const lensMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.1, metalness: 0.95 });
 
     const propsList = [];
 
-    if (spec.id === 'tinywhoop65') {
-      // 65mm Tinywhoop Geometry
+    if (spec.id === 'tinywhoop65' || spec.id === 'meteor75') {
+      // 65mm or 75mm Micro Whoop Geometry
+      const is75 = spec.id === 'meteor75';
+      const ductRadius = is75 ? 0.027 : 0.022;
+      const ductSpread = is75 ? 0.036 : 0.030;
+
       // Center Pod
-      const podGeo = new THREE.CylinderGeometry(0.022, 0.026, 0.016, 12);
+      const podGeo = new THREE.CylinderGeometry(is75 ? 0.024 : 0.022, is75 ? 0.028 : 0.026, 0.016, 12);
       const pod = new THREE.Mesh(podGeo, canopyMat);
       pod.position.y = 0.008;
       droneGroup.add(pod);
@@ -208,18 +285,17 @@ class DroneModelBuilder {
       droneGroup.add(cam);
 
       // 4 Ducts with Props
-      const ductRadius = 0.022;
       const ductOffsets = [
-        { x:  0.030, z:  0.030 },
-        { x: -0.030, z:  0.030 },
-        { x: -0.030, z: -0.030 },
-        { x:  0.030, z: -0.030 }
+        { x:  ductSpread, z:  ductSpread },
+        { x: -ductSpread, z:  ductSpread },
+        { x: -ductSpread, z: -ductSpread },
+        { x:  ductSpread, z: -ductSpread }
       ];
 
       const ductGeo = new THREE.TorusGeometry(ductRadius, 0.0035, 8, 20);
       ductOffsets.forEach((pos, idx) => {
         // Strut arm
-        const armGeo = new THREE.CylinderGeometry(0.002, 0.002, 0.042, 6);
+        const armGeo = new THREE.CylinderGeometry(0.002, 0.002, ductSpread * 1.4, 6);
         const arm = new THREE.Mesh(armGeo, carbonMat);
         arm.rotation.z = Math.PI / 2;
         arm.rotation.y = (idx % 2 === 0 ? 1 : -1) * Math.PI / 4;
@@ -241,7 +317,7 @@ class DroneModelBuilder {
       });
 
       // Rear Status LED
-      const led = new THREE.Mesh(new THREE.SphereGeometry(0.004, 8, 8), ledRed);
+      const led = new THREE.Mesh(new THREE.SphereGeometry(0.004, 8, 8), is75 ? ledCyan : ledRed);
       led.position.set(0, 0.006, -0.025);
       droneGroup.add(led);
 
@@ -283,9 +359,14 @@ class DroneModelBuilder {
       hdCam.rotation.x = -(spec.defaultCameraTilt * Math.PI / 180);
       droneGroup.add(hdCam);
 
-    } else if (spec.id === 'toothpick3') {
-      // 3-inch Toothpick geometry (Minimalist X-frame)
-      const armGeo = new THREE.BoxGeometry(0.12, 0.003, 0.008);
+    } else if (spec.id === 'toothpick3' || spec.id === 'phantom35') {
+      // 3-inch Toothpick or 3.5-inch Freestyle (X-frame)
+      const is35 = spec.id === 'phantom35';
+      const armSpan = is35 ? 0.16 : 0.12;
+      const propRadius = is35 ? 0.048 : 0.040;
+      const spread = is35 ? 0.058 : 0.045;
+
+      const armGeo = new THREE.BoxGeometry(armSpan, 0.0035, 0.009);
       const arm1 = new THREE.Mesh(armGeo, carbonMat);
       arm1.rotation.y = Math.PI / 4;
       const arm2 = new THREE.Mesh(armGeo, carbonMat);
@@ -301,19 +382,17 @@ class DroneModelBuilder {
 
       // Open Props on motor stubs
       const motorOffsets = [
-        { x:  0.045, z:  0.045 },
-        { x: -0.045, z:  0.045 },
-        { x: -0.045, z: -0.045 },
-        { x:  0.045, z: -0.045 }
+        { x:  spread, z:  spread },
+        { x: -spread, z:  spread },
+        { x: -spread, z: -spread },
+        { x:  spread, z: -spread }
       ];
       motorOffsets.forEach((pos) => {
-        // Motor bell
-        const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.008, 10), carbonMat);
+        const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.009, 10), carbonMat);
         motor.position.set(pos.x, 0.006, pos.z);
         droneGroup.add(motor);
 
-        // Propeller blades (3-blade blur)
-        const prop = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.040, 0.0018, 14), propMat);
+        const prop = new THREE.Mesh(new THREE.CylinderGeometry(propRadius, propRadius, 0.0018, 14), propMat);
         prop.position.set(pos.x, 0.012, pos.z);
         droneGroup.add(prop);
         propsList.push(prop);

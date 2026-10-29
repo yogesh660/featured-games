@@ -35,7 +35,6 @@ class TrackManager {
         difficulty: 'Beginner / Technical',
         laps: 2,
         gates: [
-          // x, y, z, rotY, rotX, radius, type
           { pos: [-3.5, 1.2, -0.5], rotY: 0, rotX: 0, r: 0.75, label: 'Sofa Flyover' },
           { pos: [ 2.0, 2.2, -4.0], rotY: -Math.PI / 3, rotX: 0, r: 0.85, label: 'Stair Ascent' },
           { pos: [ 0.0, 4.2, -7.5], rotY: Math.PI, rotX: 0, r: 0.85, label: 'Loft Mezzanine' },
@@ -51,10 +50,22 @@ class TrackManager {
         gates: [
           { pos: [  0.0,  3.5, -15.0], rotY: 0, rotX: 0, r: 2.2, label: 'Runway Gate 1' },
           { pos: [-12.0,  6.5,  -5.0], rotY: Math.PI / 4, rotX: 0, r: 2.4, label: 'Container Climb' },
-          { pos: [  0.0, 14.0,   0.0], rotY: 0, rotX: Math.PI / 2, r: 2.5, label: 'Truss Dive Gate' }, // Horizontal dive gate!
+          { pos: [  0.0, 14.0,   0.0], rotY: 0, rotX: Math.PI / 2, r: 2.5, label: 'Truss Dive Gate' },
           { pos: [  0.0,  3.0,  15.0], rotY: 0, rotX: 0, r: 2.0, label: 'Bridge Tunnel' },
           { pos: [ 14.0,  6.0,   5.0], rotY: -Math.PI / 2, rotX: 0, r: 2.4, label: 'Catwalk Slalom' },
           { pos: [  0.0,  3.5, -28.0], rotY: 0, rotX: 0, r: 2.2, label: 'Start / Finish' }
+        ]
+      },
+      'cyber-city': {
+        name: 'Neo Skyline Sprint',
+        difficulty: 'Pro / Acrobatic',
+        laps: 2,
+        gates: [
+          { pos: [  0.0,  3.0, -15.0], rotY: 0, rotX: 0, r: 2.2, label: 'Helipad Launch' },
+          { pos: [ 18.0, 10.0,  -6.0], rotY: -Math.PI / 4, rotX: 0, r: 2.5, label: 'East Tower Climb' },
+          { pos: [  0.0, 22.0, -20.0], rotY: 0, rotX: Math.PI / 2, r: 2.8, label: 'Comms Mast Dive' },
+          { pos: [-12.0,  8.0,   0.0], rotY: Math.PI / 3, rotX: 0, r: 2.4, label: 'Skybridge Pass' },
+          { pos: [  0.0,  3.0, -26.0], rotY: 0, rotX: 0, r: 2.2, label: 'Start / Finish' }
         ]
       },
       'alpine-canyon': {
@@ -123,7 +134,6 @@ class TrackManager {
     const r = gData.r;
     const tubeR = Math.max(0.04, r * 0.06);
 
-    // Arch Gate Frame Geometry (Torus arc or arch)
     const frameGeo = new THREE.TorusGeometry(r, tubeR, 8, 24, Math.PI);
     const neonMat = new THREE.MeshStandardMaterial({
       color: 0x00f0ff,
@@ -136,7 +146,6 @@ class TrackManager {
     frameMesh.position.y = 0;
     gateGroup.add(frameMesh);
 
-    // Gate Base Pillars if arch
     const pillarGeo = new THREE.CylinderGeometry(tubeR, tubeR, r, 8);
     const p1 = new THREE.Mesh(pillarGeo, neonMat);
     p1.position.set(-r, -r / 2, 0);
@@ -146,15 +155,13 @@ class TrackManager {
     p2.position.set(r, -r / 2, 0);
     gateGroup.add(p2);
 
-    // Directional Arrow Chevron in center
     const arrowMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.5 });
     const arrowGeo = new THREE.ConeGeometry(r * 0.22, r * 0.35, 3);
     const arrow = new THREE.Mesh(arrowGeo, arrowMat);
-    arrow.rotation.x = -Math.PI / 2; // points in flight direction
+    arrow.rotation.x = -Math.PI / 2;
     arrow.position.set(0, r * 0.4, 0);
     gateGroup.add(arrow);
 
-    // Forward Normal of Gate (direction player must fly)
     const normal = new THREE.Vector3(0, 0, 1).applyEuler(gateGroup.rotation).normalize();
 
     return {
@@ -177,7 +184,6 @@ class TrackManager {
   _updateGateVisuals() {
     this.gates.forEach((gate, idx) => {
       if (idx === this.currentGateIndex) {
-        // Active target gate: Blazing Amber / Gold
         gate.neonMat.color.setHex(0xffaa00);
         gate.neonMat.emissive.setHex(0xffaa00);
         gate.neonMat.emissiveIntensity = 1.6;
@@ -185,14 +191,12 @@ class TrackManager {
         gate.arrow.material.color.setHex(0xffaa00);
         gate.mesh.scale.set(1.06, 1.06, 1.06);
       } else if (idx < this.currentGateIndex) {
-        // Already passed gate: Soft Emerald Green
         gate.neonMat.color.setHex(0x10b981);
         gate.neonMat.emissive.setHex(0x10b981);
         gate.neonMat.emissiveIntensity = 0.4;
         gate.arrow.visible = false;
         gate.mesh.scale.set(1.0, 1.0, 1.0);
       } else {
-        // Upcoming gate: Deep Cyan / Violet
         gate.neonMat.color.setHex(0x6366f1);
         gate.neonMat.emissive.setHex(0x6366f1);
         gate.neonMat.emissiveIntensity = 0.5;
@@ -204,9 +208,6 @@ class TrackManager {
 
   /**
    * Check if drone passed the current target gate
-   * @param {THREE.Vector3} dronePos
-   * @param {THREE.Vector3} prevDronePos
-   * @returns {Object|null} event info if passed
    */
   checkDronePass(dronePos, prevDronePos) {
     if (!this.isRaceActive || this.isFinished || this.gates.length === 0) return null;
@@ -214,19 +215,14 @@ class TrackManager {
     const targetGate = this.gates[this.currentGateIndex];
     if (!targetGate) return null;
 
-    // Vector from gate to drone
     const toDrone = this._tempV.subVectors(dronePos, targetGate.pos);
     const distToCenter = toDrone.length();
 
-    // Check if within gate aperture radius (+ margin)
     if (distToCenter <= targetGate.radius * 1.35) {
-      // Check plane crossing along gate normal
       const prevDot = new this.THREE.Vector3().subVectors(prevDronePos, targetGate.pos).dot(targetGate.normal);
       const currDot = toDrone.dot(targetGate.normal);
 
-      // Crossed plane or very close
       if ((prevDot < 0 && currDot >= 0) || (distToCenter < targetGate.radius * 0.7 && Math.abs(currDot) < 0.6)) {
-        // Valid pass!
         return this._onGatePassed(targetGate);
       }
     }
@@ -244,12 +240,10 @@ class TrackManager {
 
     if (isLapComplete) {
       if (this.lap >= this.totalLaps) {
-        // Finished race!
         this.isFinished = true;
         this.isRaceActive = false;
         raceFinished = true;
       } else {
-        // Next Lap
         this.lap++;
         this.currentGateIndex = 0;
         this.gates.forEach(g => g.isPassed = false);

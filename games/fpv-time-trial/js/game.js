@@ -1,7 +1,7 @@
 /**
  * Main FPV Game Coordinator
  * Orchestrates Three.js rendering, physics loop, audio synthesis,
- * camera systems, tracks, telemetry HUD, and UI modals.
+ * camera systems, tracks, telemetry HUD, UI modals, and automated test bench.
  */
 
 class FpvGame {
@@ -34,6 +34,7 @@ class FpvGame {
     this.envManager = new EnvironmentsManager(THREE, this.scene);
     this.trackManager = new TrackManager(THREE, this.scene);
     this.physics = new FpvPhysics(THREE, DRONE_SPECS[this.currentSpecId], this.rates);
+    this.testBench = new FpvTestBench(this);
 
     // Drone 3D Visual Mesh
     this.droneMesh = null;
@@ -45,6 +46,7 @@ class FpvGame {
     this.clock = new THREE.Clock();
     this.countdownSeconds = -1;
     this.countdownTimer = null;
+    this.isStarted = false;
 
     // Temp Math Helpers
     this._camOffset = new THREE.Vector3();
@@ -83,10 +85,24 @@ class FpvGame {
     // 7. Start Render Loop
     this.animate();
 
-    // 8. Trigger initial race countdown
-    setTimeout(() => {
-      this.startCountdown();
-    }, 600);
+    // 8. Auto-start if requested in URL query (e.g. ?testbench=1 for headless testing)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('testbench')) {
+      const modalStart = document.getElementById('modal-start');
+      if (modalStart) modalStart.classList.remove('open');
+      unlockAudio();
+      const sec = parseFloat(urlParams.get('testbench')) || 20.0;
+      setTimeout(() => {
+        this.testBench.start(sec);
+      }, 500);
+    } else if (urlParams.has('autostart')) {
+      const modalStart = document.getElementById('modal-start');
+      if (modalStart) modalStart.classList.remove('open');
+      unlockAudio();
+      setTimeout(() => {
+        this.startCountdown();
+      }, 500);
+    }
   }
 
   loadEnvironment(envId) {
@@ -135,6 +151,7 @@ class FpvGame {
   }
 
   startCountdown() {
+    this.isStarted = true;
     this.countdownSeconds = 3;
     const alertEl = document.getElementById('hud-alert');
 
@@ -194,6 +211,9 @@ class FpvGame {
       case 'KeyM':
         this.cycleFlightMode();
         break;
+      case 'Escape':
+        this.openStartMenu();
+        break;
     }
   }
 
@@ -205,7 +225,7 @@ class FpvGame {
   }
 
   cycleFlightMode() {
-    const modes = ['ACRO', 'ANGLE', 'HORIZON'];
+    const modes = ['ANGLE', 'ACRO', 'HORIZON'];
     const idx = modes.indexOf(this.physics.mode);
     const nextMode = modes[(idx + 1) % modes.length];
     this.physics.setMode(nextMode);
@@ -216,6 +236,13 @@ class FpvGame {
       modeEl.className = `osd-flight-mode ${nextMode.toLowerCase()}`;
     }
     this.showAlert(`FLIGHT MODE: ${nextMode}`, 900);
+  }
+
+  openStartMenu() {
+    const modalStart = document.getElementById('modal-start');
+    if (modalStart) {
+      modalStart.classList.add('open');
+    }
   }
 
   onWindowResize() {
@@ -232,18 +259,23 @@ class FpvGame {
     // 1. Update Input Controls
     this.controls.update(dt);
 
-    // 2. Physics Step
+    // 2. Allow Automated Test Bench / Autopilot to override inputs if active
+    if (this.testBench && this.testBench.isActive) {
+      this.testBench.update(dt, this.controls.inputs);
+    }
+
+    // 3. Physics Step
     this.physics.update(dt, this.controls.inputs);
 
-    // 3. Audio Update
+    // 4. Audio Update
     const speedKmh = this.physics.velocity.length() * 3.6;
     const angSpeed = this.physics.angularVelocity.length();
     this.audio.update(this.physics.currentThrustPercent, speedKmh, angSpeed);
 
-    // 4. Update Animated Environment Props (e.g. Ceiling Fan)
+    // 5. Update Animated Environment Props (e.g. Ceiling Fan)
     this.envManager.update(dt);
 
-    // 5. Update Drone 3D Visual Mesh
+    // 6. Update Drone 3D Visual Mesh
     if (this.droneMesh) {
       this.droneMesh.position.copy(this.physics.position);
       this.droneMesh.quaternion.copy(this.physics.quaternion);
@@ -260,10 +292,10 @@ class FpvGame {
       this.droneMesh.visible = (this.cameraMode === 'CHASE');
     }
 
-    // 6. Camera Position & Attitude Update
+    // 7. Camera Position & Attitude Update
     this.updateCamera();
 
-    // 7. Track Gate Crossing Validation
+    // 8. Track Gate Crossing Validation
     this.trackManager.update(dt);
     const passResult = this.trackManager.checkDronePass(this.physics.position, this.prevPosition);
     if (passResult) {
@@ -278,10 +310,10 @@ class FpvGame {
     }
     this.prevPosition.copy(this.physics.position);
 
-    // 8. Update HUD & OSD Telemetry
+    // 9. Update HUD & OSD Telemetry
     this.updateHUD(speedKmh);
 
-    // 9. Render 3D Scene
+    // 10. Render 3D Scene
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -341,7 +373,6 @@ class FpvGame {
     // Artificial Horizon Ladder
     const horizonEl = document.getElementById('osd-horizon-ladder');
     if (horizonEl) {
-      // Extract Euler pitch and roll relative to world horizon
       this._camEuler.setFromQuaternion(this.camera.quaternion, 'YXZ');
       const rollDeg = (this._camEuler.z * 180) / Math.PI;
       const pitchOffset = Math.sin(this._camEuler.x) * 45; // pixel translation
@@ -394,6 +425,83 @@ class FpvGame {
   }
 
   setupUI() {
+    // 0. Start Menu Modal Controls
+    const modalStart = document.getElementById('modal-start');
+    const btnOpenMenu = document.getElementById('btn-open-menu');
+    if (btnOpenMenu && modalStart) {
+      btnOpenMenu.addEventListener('click', () => {
+        modalStart.classList.add('open');
+      });
+    }
+
+    const btnStartFlight = document.getElementById('btn-start-flight');
+    if (btnStartFlight && modalStart) {
+      btnStartFlight.addEventListener('click', () => {
+        modalStart.classList.remove('open');
+        this.audio.init();
+        this.audio.resume();
+        this.startCountdown();
+      });
+    }
+
+    const btnStartTestbench = document.getElementById('btn-start-testbench');
+    if (btnStartTestbench && modalStart) {
+      btnStartTestbench.addEventListener('click', () => {
+        modalStart.classList.remove('open');
+        this.audio.init();
+        this.audio.resume();
+        this.testBench.start(20);
+      });
+    }
+
+    const btnTestbenchHud = document.getElementById('btn-testbench-hud');
+    if (btnTestbenchHud) {
+      btnTestbenchHud.addEventListener('click', () => {
+        if (modalStart) modalStart.classList.remove('open');
+        this.audio.init();
+        this.audio.resume();
+        this.testBench.start(20);
+      });
+    }
+
+    // Start Menu Drone Pills
+    const dronePills = document.querySelectorAll('#start-drone-pills .start-pill-opt');
+    dronePills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        dronePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const dId = pill.getAttribute('data-drone');
+        this.setDrone(dId);
+      });
+    });
+
+    // Start Menu Environment Pills
+    const envPills = document.querySelectorAll('#start-env-pills .start-pill-opt');
+    envPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        envPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const eId = pill.getAttribute('data-env');
+        this.loadEnvironment(eId);
+      });
+    });
+
+    // Start Menu Mode Pills
+    const modePills = document.querySelectorAll('#start-mode-pills .start-pill-opt');
+    modePills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        modePills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const m = pill.getAttribute('data-mode');
+        this.physics.setMode(m);
+        const modeEl = document.getElementById('osd-flight-mode');
+        if (modeEl) {
+          modeEl.innerText = m;
+          modeEl.className = `osd-flight-mode ${m.toLowerCase()}`;
+        }
+      });
+    });
+
     // Drone Modal
     const btnDrone = document.getElementById('btn-drone');
     const modalDrone = document.getElementById('modal-drone');
