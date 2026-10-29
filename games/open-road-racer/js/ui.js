@@ -141,7 +141,7 @@ class UIController {
   }
 
   updateHUD(telemetry, lapTimeMs, currentCp, totalCp, mode) {
-    if (this.elSpeed) this.elSpeed.innerText = telemetry.speedKmh;
+    if (this.elSpeed) this.elSpeed.innerText = Math.round(Math.abs(telemetry.speedKmh));
     if (this.elGear) this.elGear.innerText = `G ${telemetry.gear}`;
     if (this.elRpmBar) this.elRpmBar.style.width = `${telemetry.rpmNorm * 100}%`;
 

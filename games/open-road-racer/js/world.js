@@ -151,7 +151,8 @@ class WorldGenerator {
       normal.applyAxisAngle(tangent, bankAngle);
     }
 
-    return { point, tangent, right, normal };
+    const curvature = curveAmount / (du * (this.totalLength || 3200));
+    return { point, tangent, right, normal, curvature };
   }
 
   createRoadTexture() {

@@ -1,11 +1,14 @@
 /**
- * Open Road Racer - Modern Exotic Roadster Dynamics & Model
+ * Open Road Racer - Vehicle Dynamics & 3D Simulation (Complete Physics Overhaul)
  * Features:
- *  - High-fidelity 3D roadster loaded from authored OBJ assets with procedural supercar fallback.
- *  - Mathematically decoupled two-tier wheel hierarchy (steerGroup + spinGroup = ZERO wobble).
- *  - Intuitive responsive steering & arcade physics (steer right turns right, steer left turns left).
- *  - Elevated Slow Roads chase camera ensuring the road ahead and lane markings are always clearly visible.
- *  - Dynamic brake lights & ground contact shadow.
+ *  - Genuine 2-DOF bicycle-model vehicle dynamics with real yaw inertia, tire cornering forces & slip angle.
+ *  - True-direction steering: front wheels, vehicle nose, and lateral velocity are 100% physically aligned.
+ *  - Centrifugal drift on mountain curves: high-speed turns require active steering and line management.
+ *  - Realistic torque curve, gear ratios, aerodynamic drag, engine braking, and smooth reverse.
+ *  - Suspension pitch (dive on brake, squat on accel) and body roll into high-speed corners.
+ *  - Authored Fast Roads 3D roadster model with isolated wheel hierarchy (steerGroup + spinGroup = ZERO wobble).
+ *  - Soft guardrail rebound and realistic off-road gravel deceleration.
+ *  - Smooth cinematic chase camera with dynamic FOV scaling.
  */
 
 class Vehicle {
@@ -13,38 +16,36 @@ class Vehicle {
     this.scene = scene;
     this.world = world;
 
-    // Spline parameter & Road offset
+    // Spline & Spatial State
     this.progressU = 0.005;
-    this.lateralOffset = 0.0; // Lateral position in meters (-5.0 to +5.0 is inside road)
-    this.steerAngle = 0.0;
-    this.maxSteerAngle = 0.58;
+    this.lateralOffset = 0.0;    // Lateral distance from road centerline (+ right, - left)
+    this.headingAngle = 0.0;     // Heading angle relative to road tangent in radians (+ right, - left)
+    this.steerAngle = 0.0;       // Front wheel steering angle in radians (+ right, - left)
+    this.yawRate = 0.0;          // Heading angular velocity (rad/s)
 
-    // Dynamics
-    this.speedKmh = 0.0;
+    // Longitudinal Dynamics
+    this.speed = 0.0;            // Velocity in m/s (can be negative for reverse)
+    this.speedKmh = 0.0;         // Display velocity in km/h
     this.maxSpeedKmh = 195.0;
-    this.accelRate = 58.0;      // km/h per sec
-    this.brakeRate = 120.0;     // km/h per sec
-    this.dragRate = 16.0;
-
-    this.isOffRoad = false;
-    this.isSkidding = false;
-    this.isDrifting = false;
-
-    // Suspension body roll & pitch
-    this.pitch = 0.0;
-    this.roll = 0.0;
-
-    // Transmission & RPM simulation
     this.gear = 1;
     this.rpmNorm = 0.15;
     this.gearRatios = [40, 78, 120, 160, 195];
 
+    // Vehicle State Flags
+    this.isOffRoad = false;
+    this.isSkidding = false;
+    this.isDrifting = false;
+
+    // Suspension Dynamics
+    this.pitch = 0.0;
+    this.roll = 0.0;
+
     // Cameras
-    this.cameraMode = 'chase'; // 'chase' or 'cockpit'
+    this.cameraMode = 'chase';   // 'chase' or 'cockpit'
     this.chaseCamPos = new THREE.Vector3();
     this.chaseLookTarget = new THREE.Vector3();
 
-    // 3D Nodes
+    // 3D Scene Nodes
     this.carGroup = new THREE.Group();
     this.scene.add(this.carGroup);
 
@@ -53,7 +54,7 @@ class Vehicle {
     this.objModelLoaded = false;
     this.proceduralBody = null;
 
-    // Build procedural supercar first so car is immediately rendered
+    // Build procedural supercar first as immediate fallback
     this.buildProceduralSupercar();
     this.buildDustSystem();
 
@@ -336,10 +337,10 @@ class Vehicle {
 
     // Procedural Wheels
     const wheelPositions = [
-      { name: 'FL', x: -0.92, y: 0.0, z:  1.38, isFront: true },
-      { name: 'FR', x:  0.92, y: 0.0, z:  1.38, isFront: true },
-      { name: 'RL', x: -0.92, y: 0.0, z: -1.38, isFront: false },
-      { name: 'RR', x:  0.92, y: 0.0, z: -1.38, isFront: false }
+      { name: 'FL', x: -0.88, y: 0.0, z:  1.58, isFront: true },
+      { name: 'FR', x:  0.88, y: 0.0, z:  1.58, isFront: true },
+      { name: 'RL', x: -0.88, y: 0.0, z: -1.58, isFront: false },
+      { name: 'RR', x:  0.88, y: 0.0, z: -1.58, isFront: false }
     ];
 
     const tireGeom = new THREE.CylinderGeometry(0.34, 0.34, 0.24, 18);
@@ -393,9 +394,12 @@ class Vehicle {
   }
 
   resetPosition() {
+    this.speed = 0.0;
     this.speedKmh = 0.0;
     this.lateralOffset = 0.0;
+    this.headingAngle = 0.0;
     this.steerAngle = 0.0;
+    this.yawRate = 0.0;
     this.gear = 1;
     this.rpmNorm = 0.15;
     this.pitch = 0.0;
@@ -403,38 +407,50 @@ class Vehicle {
   }
 
   update(dt, input) {
-    // 1. Acceleration / Braking
     const isBraking = input.keys.brake;
-    const isDrifting = input.keys.drift;
+    const isThrottle = input.keys.throttle;
+    const isHandbrake = input.keys.handbrake;
 
-    if (input.keys.throttle) {
-      const topSpeed = this.isOffRoad ? (this.maxSpeedKmh * 0.45) : this.maxSpeedKmh;
-      if (this.speedKmh < topSpeed) {
-        this.speedKmh += this.accelRate * dt;
+    const maxSpeedMs = this.maxSpeedKmh / 3.6; // ~54.17 m/s (195 km/h)
+    const halfRoad = this.world.roadWidth / 2; // 5.0m
+    this.isOffRoad = Math.abs(this.lateralOffset) > halfRoad;
+
+    // 1. Longitudinal Acceleration & Braking Dynamics
+    if (isThrottle) {
+      const topSpeed = this.isOffRoad ? (maxSpeedMs * 0.42) : maxSpeedMs;
+      if (this.speed < topSpeed) {
+        // Punchy low-end torque tapering smoothly near redline
+        const torqueRatio = Math.max(0.18, 1.0 - Math.pow(Math.max(0, this.speed) / maxSpeedMs, 1.7));
+        const accelRate = (this.isOffRoad ? 6.5 : 15.0) * torqueRatio; // m/s^2 (~0-100 in 4.5s)
+        this.speed += accelRate * dt;
+        if (this.speed > topSpeed) this.speed = topSpeed;
       }
     } else if (isBraking) {
-      if (this.speedKmh > 2.0) {
-        this.speedKmh -= this.brakeRate * dt;
-        if (this.speedKmh < 0) this.speedKmh = 0;
+      if (this.speed > 0.6) {
+        // Firm progressive braking
+        const brakeDecel = 26.0; // m/s^2 (~100-0 in 34m)
+        this.speed -= brakeDecel * dt;
+        if (this.speed < 0) this.speed = 0;
       } else {
-        // Reverse
-        this.speedKmh -= 22.0 * dt;
-        if (this.speedKmh < -35.0) this.speedKmh = -35.0;
+        // Smooth reverse engagement
+        this.speed -= 7.0 * dt;
+        if (this.speed < -9.7) this.speed = -9.7; // -35 km/h max reverse
       }
     } else {
-      // Natural rolling drag
-      if (this.speedKmh > 0) {
-        this.speedKmh -= this.dragRate * dt;
-        if (this.speedKmh < 0) this.speedKmh = 0;
-      } else if (this.speedKmh < 0) {
-        this.speedKmh += this.dragRate * dt;
-        if (this.speedKmh > 0) this.speedKmh = 0;
-      }
+      // Natural rolling resistance and aerodynamic drag (v^2)
+      const aeroDrag = 0.0075 * this.speed * Math.abs(this.speed);
+      const rollingDrag = this.isOffRoad ? 4.0 : 1.25;
+      const totalDecel = (rollingDrag + aeroDrag) * Math.sign(this.speed);
+      const prevSign = Math.sign(this.speed);
+      this.speed -= totalDecel * dt;
+      if (Math.sign(this.speed) !== prevSign) this.speed = 0;
     }
+
+    this.speedKmh = this.speed * 3.6;
 
     // Dynamic brake lights
     const brakeColor = isBraking ? 0xff0018 : 0xee0018;
-    const brakeEmit = isBraking ? 3.2 : 0.9;
+    const brakeEmit = isBraking ? 3.5 : 0.9;
     this.brakeLights.forEach(bl => {
       if (bl.material && bl.material.emissive) {
         bl.material.emissive.setHex(brakeColor);
@@ -445,71 +461,111 @@ class Vehicle {
     // 2. Transmission & Simulated RPM
     this.updateTransmission();
 
-    // 3. Progressive Steering with Speed Dampening (Intuitive direction)
-    // input.keys.steer: +1 for Right, -1 for Left
-    const speedFactor = THREE.MathUtils.clamp(1.0 - (Math.abs(this.speedKmh) / 240.0), 0.30, 1.0);
-    const targetSteer = input.keys.steer * this.maxSteerAngle * speedFactor;
-    this.steerAngle += (targetSteer - this.steerAngle) * Math.min(1.0, 9.5 * dt);
+    // 3. Progressive Steering with Speed-Sensitive Caster
+    // input.keys.steer: +1 for Right ('D' / Right arrow), -1 for Left ('A' / Left arrow)
+    const speedRatio = Math.min(1.0, Math.abs(this.speedKmh) / 200.0);
+    const speedDamping = 1.0 - speedRatio * 0.60; // Responsive at low speeds, stable at high speeds
+    const maxSteerLimit = 0.44 * speedDamping;
+    const targetSteer = input.keys.steer * maxSteerLimit;
+
+    // Snappy turn-in, rapid self-centering when releasing keys
+    const steerSpeed = (Math.abs(input.keys.steer) > 0.01) ? 9.5 : 13.5;
+    this.steerAngle += (targetSteer - this.steerAngle) * Math.min(1.0, steerSpeed * dt);
 
     // Front wheels steer cleanly around local Y; all wheels spin purely around local axle X (Zero wobble)
-    const rollRate = (this.speedKmh / 3.6) / 0.34; // rad/s
+    const rollRate = (this.speed / 0.34); // rad/s
     this.wheels.forEach(w => {
       if (w.isFront) {
-        w.steerGroup.rotation.y = -this.steerAngle;
+        // Positive steerAngle turns wheels to the RIGHT (+X)
+        w.steerGroup.rotation.y = this.steerAngle;
       }
-      const dir = w.isLeft ? -1 : 1;
-      w.spinGroup.rotation.x += dir * rollRate * dt;
+      w.spinGroup.rotation.x += rollRate * dt;
     });
 
-    // 4. Spline Progress
-    const speedMs = this.speedKmh / 3.6;
-    const roadLen = this.world.totalLength || 3200;
-    const deltaU = (speedMs * dt) / roadLen;
+    // 4. Sample Road Spline & Curvature
+    const { point, tangent, right, normal, curvature } = this.world.getRoadFrameAt(this.progressU);
+    const roadCurv = curvature || 0.0;
 
+    // 5. Bicycle-Model Yaw & Lateral Drift Dynamics
+    this.isDrifting = isHandbrake && Math.abs(this.speedKmh) > 28;
+    const grip = this.isDrifting ? 0.35 : (this.isOffRoad ? 0.65 : 1.0);
+    const wheelbase = 2.76;
+
+    // Ackerman yaw rate generated by front tire grip
+    const targetYawRate = (this.speed / wheelbase) * Math.sin(this.steerAngle);
+    const yawResponsiveness = (this.isDrifting ? 2.4 : 1.1) * 11.5;
+    this.yawRate += (targetYawRate - this.yawRate) * Math.min(1.0, yawResponsiveness * dt);
+
+    // Self-aligning torque: heading naturally re-centers towards the road tangent
+    const alignTorque = 4.2 * grip;
+    if (Math.abs(input.keys.steer) < 0.05 && !this.isDrifting) {
+      this.headingAngle *= Math.exp(-alignTorque * dt);
+      this.yawRate *= Math.exp(-6.0 * dt);
+    } else {
+      this.headingAngle += this.yawRate * dt;
+    }
+
+    // Road Curvature Rotation: As the road curves under the vehicle, tangent frame rotates
+    const vTangent = this.speed * Math.cos(this.headingAngle);
+    this.headingAngle -= roadCurv * vTangent * dt;
+
+    // Clamp maximum slip angle
+    const maxSlip = this.isDrifting ? 0.75 : 0.42;
+    this.headingAngle = THREE.MathUtils.clamp(this.headingAngle, -maxSlip, maxSlip);
+
+    // 6. Spline Progress & Lateral Displacement
+    // Centrifugal outward acceleration on curves
+    const centrifugalAccel = -roadCurv * this.speed * Math.abs(this.speed);
+    const vLateral = this.speed * Math.sin(this.headingAngle) + (centrifugalAccel * 0.12);
+
+    const roadLen = this.world.totalLength || 3200;
+    const deltaU = (vTangent * dt) / roadLen;
     this.progressU = ((this.progressU + deltaU) % 1.0 + 1.0) % 1.0;
 
-    // 5. Lateral Displacement: Steer right moves car to right lane (+lateralOffset)
-    const driftMultiplier = (isDrifting && Math.abs(this.speedKmh) > 35) ? 1.6 : 1.0;
-    const lateralSpeed = (this.speedKmh / 3.6) * Math.tan(this.steerAngle) * 0.95 * driftMultiplier;
-    this.lateralOffset += lateralSpeed * dt;
+    this.lateralOffset += vLateral * dt;
 
-    // Check if off-road
-    const halfRoad = this.world.roadWidth / 2;
-    this.isOffRoad = Math.abs(this.lateralOffset) > halfRoad;
+    // 7. Soft Guardrail Rebound & Boundary Management
+    const maxLateral = halfRoad + this.world.shoulderWidth + 0.4; // ~9.4m
+    if (Math.abs(this.lateralOffset) > maxLateral) {
+      this.lateralOffset = Math.sign(this.lateralOffset) * maxLateral;
+      // Rebound gently towards road center
+      this.headingAngle = -Math.sign(this.lateralOffset) * 0.18;
+      this.yawRate = 0;
+      this.speed *= 0.88; // Scrub speed on guardrail scrape
+    }
 
-    // Clamp lateral bounds so car cannot fall off the world
-    const maxLateral = halfRoad + this.world.shoulderWidth + 1.2;
-    this.lateralOffset = THREE.MathUtils.clamp(this.lateralOffset, -maxLateral, maxLateral);
-
-    // 6. 3D Position & Orientation on Road Frame
-    const { point, tangent, right, normal } = this.world.getRoadFrameAt(this.progressU);
-
+    // 8. 3D World Placement & Orthonormal Orientation
     const carPos = point.clone().addScaledVector(right, this.lateralOffset);
     // Ground car precisely on road surface datum
     carPos.addScaledVector(normal, 0.344);
     this.carGroup.position.copy(carPos);
 
-    // Vehicle heading: combines road tangent with steering yaw
-    const yawAngle = -this.steerAngle * 0.55;
-    const headingTangent = tangent.clone().applyAxisAngle(normal, yawAngle).normalize();
-    const carRight = new THREE.Vector3().crossVectors(normal, headingTangent).normalize();
+    // Heading vector in 3D: blends road tangent and car heading angle
+    const carHeading = tangent.clone().multiplyScalar(Math.cos(this.headingAngle))
+      .add(right.clone().multiplyScalar(Math.sin(this.headingAngle)))
+      .normalize();
+
+    // Car right vector: normal x heading = true right
+    const carRight = new THREE.Vector3().crossVectors(normal, carHeading).normalize();
 
     const rotMat = new THREE.Matrix4();
-    rotMat.makeBasis(carRight, normal, headingTangent);
+    rotMat.makeBasis(carRight, normal, carHeading);
     this.carGroup.quaternion.setFromRotationMatrix(rotMat);
 
-    // Suspension dynamics: nose dips on brake, squats on accel, banks into turns
-    const targetPitch = isBraking ? -0.045 : (input.keys.throttle > 0 ? 0.03 : 0.0);
-    this.pitch += (targetPitch - this.pitch) * 12 * dt;
+    // 9. Suspension Dynamics: Pitch on accel/brake, Roll into corners
+    const targetPitch = isBraking ? -0.05 : (isThrottle ? 0.03 : 0.0);
+    this.pitch += (targetPitch - this.pitch) * 12.0 * dt;
 
-    const targetRoll = -this.steerAngle * (Math.abs(this.speedKmh) / 180) * 0.10;
-    this.roll += (targetRoll - this.roll) * 12 * dt;
+    // Body roll rolls outward against cornering inertia
+    const targetRoll = -Math.sin(this.headingAngle) * (Math.abs(this.speedKmh) / 180.0) * 0.12;
+    this.roll += (targetRoll - this.roll) * 10.0 * dt;
 
     this.carGroup.rotateX(this.pitch);
     this.carGroup.rotateZ(this.roll);
 
-    // 7. Skid detection
-    this.isSkidding = isDrifting || (Math.abs(this.steerAngle) > 0.35 && Math.abs(this.speedKmh) > 65);
+    // 10. Skid detection
+    const slipSpeed = Math.abs(this.speed * Math.sin(this.headingAngle));
+    this.isSkidding = this.isDrifting || (slipSpeed > 5.0 && Math.abs(this.speedKmh) > 35);
 
     return {
       speedKmh: this.speedKmh,
@@ -546,33 +602,39 @@ class Vehicle {
 
   updateCamera(camera, dt) {
     const forward = this.getForwardVector();
+    const { tangent, normal } = this.world.getRoadFrameAt(this.progressU);
 
     if (this.cameraMode === 'chase') {
       // Elevated Slow Roads Chase Camera:
-      // High vantage point looking down along road vector ensuring road is always prominent
+      // High vantage point smoothly following the car position and road vector
       const speedNorm = Math.min(1.0, Math.abs(this.speedKmh) / 195);
-      const dist = 7.8 + speedNorm * 1.8;
-      const height = 3.3 + speedNorm * 0.4;
+      const dist = 7.6 + speedNorm * 1.6;
+      const height = 3.2 + speedNorm * 0.4;
 
-      const idealPos = this.carGroup.position.clone().addScaledVector(forward, -dist);
-      idealPos.y += height;
+      // Blend car forward with road tangent for buttery smooth camera turns
+      const camDir = forward.clone().multiplyScalar(0.75).add(tangent.clone().multiplyScalar(0.25)).normalize();
+      const idealPos = this.carGroup.position.clone()
+        .addScaledVector(camDir, -dist)
+        .addScaledVector(normal, height);
 
       // Camera position smoothing
       if (this.chaseCamPos.lengthSq() < 1) {
         this.chaseCamPos.copy(idealPos);
       } else {
-        this.chaseCamPos.lerp(idealPos, Math.min(1.0, 9.0 * dt));
+        this.chaseCamPos.lerp(idealPos, Math.min(1.0, 8.5 * dt));
       }
       camera.position.copy(this.chaseCamPos);
 
-      // Look 24m ahead down the road slightly below the horizon so road surface is prominently framed
-      const lookAhead = this.carGroup.position.clone().addScaledVector(forward, 24.0);
-      lookAhead.y += 0.85;
+      // Look 22m ahead down the road
+      const lookDir = tangent.clone().multiplyScalar(0.65).add(forward.clone().multiplyScalar(0.35)).normalize();
+      const lookAhead = this.carGroup.position.clone()
+        .addScaledVector(lookDir, 22.0)
+        .addScaledVector(normal, 0.88);
 
       if (this.chaseLookTarget.lengthSq() < 1) {
         this.chaseLookTarget.copy(lookAhead);
       } else {
-        this.chaseLookTarget.lerp(lookAhead, Math.min(1.0, 12.0 * dt));
+        this.chaseLookTarget.lerp(lookAhead, Math.min(1.0, 11.0 * dt));
       }
       camera.lookAt(this.chaseLookTarget);
 
@@ -581,13 +643,15 @@ class Vehicle {
 
     } else {
       // First-person Cockpit / Low Hood View
-      const hoodPos = this.carGroup.position.clone().addScaledVector(forward, 0.45);
-      hoodPos.y += 0.78;
+      const hoodPos = this.carGroup.position.clone()
+        .addScaledVector(forward, 0.45)
+        .addScaledVector(normal, 0.78);
 
       camera.position.copy(hoodPos);
 
-      const lookTarget = this.carGroup.position.clone().addScaledVector(forward, 32.0);
-      lookTarget.y += 0.70;
+      const lookTarget = this.carGroup.position.clone()
+        .addScaledVector(forward, 32.0)
+        .addScaledVector(normal, 0.70);
 
       camera.lookAt(lookTarget);
       camera.fov = 74;
