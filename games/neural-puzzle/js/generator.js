@@ -49,12 +49,18 @@ class NeuralGenerator {
     const startX = 0;
     const startY = Math.floor(rng() * height);
 
-    // Pick 1 to 3 targets on the opposite sides
-    const targetCount = difficulty === 'casual' ? 1 : (difficulty === 'expert' ? 3 : 2);
+    // Pick 1 to 3 spaced targets on the opposite edge
+    const targetCount = (difficulty === 'casual' || height <= 3) ? 1 : (difficulty === 'expert' && height >= 6 ? 3 : 2);
     const targetPositions = [];
-    for (let i = 0; i < targetCount; i++) {
-      const ty = Math.floor((i + 0.5) * (height / targetCount));
-      targetPositions.push({ x: width - 1, y: Math.min(height - 1, Math.max(0, ty)) });
+    if (targetCount === 1) {
+      targetPositions.push({ x: width - 1, y: Math.floor(height / 2) });
+    } else if (targetCount === 2) {
+      targetPositions.push({ x: width - 1, y: 0 });
+      targetPositions.push({ x: width - 1, y: height - 1 });
+    } else {
+      targetPositions.push({ x: width - 1, y: 0 });
+      targetPositions.push({ x: width - 1, y: Math.floor(height / 2) });
+      targetPositions.push({ x: width - 1, y: height - 1 });
     }
 
     // 3. Connect Source to all Targets using BFS Steiner Tree
@@ -219,16 +225,8 @@ class NeuralGenerator {
         }
 
         if (ports.length === 4) {
-          // Cross or Bridge
-          if (difficulty === 'expert' && rng() > 0.5) {
-            const rot = Math.floor(rng() * 2);
-            tileRow.push({ type: 'bridge', rotation: (rot + 1) % 2 });
-            solRow.push(rot);
-            scrambles++;
-          } else {
-            tileRow.push({ type: 'cross', rotation: 0 });
-            solRow.push(0);
-          }
+          tileRow.push({ type: 'cross', rotation: 0 });
+          solRow.push(0);
           continue;
         }
       }
