@@ -122,6 +122,18 @@ class OpenRoadGame {
     if (this.input.consumeAction('togglePause')) {
       this.togglePause();
     }
+    if (this.input.consumeAction('changeCamera')) {
+      this.vehicle.toggleCamera();
+      if (this.ui) this.ui.showAlert('CAMERA: ' + this.vehicle.cameraMode.toUpperCase());
+    }
+    if (this.input.consumeAction('reset')) {
+      this.vehicle.resetPosition();
+      if (this.ui) this.ui.showAlert('POSITION RESET');
+    }
+    if (this.input.consumeAction('switchVehicle')) {
+      this.vehicle.cycleVehicle();
+      if (this.ui) this.ui.showAlert('VEHICLE: ' + this.vehicle.metrics.name.toUpperCase());
+    }
 
     if (this.isPaused) return;
 

@@ -30,6 +30,15 @@ class UIController {
     if (window.location.search.includes('autostart=1')) {
       if (this.modalOnboard) this.modalOnboard.classList.remove('active');
       this.game.resumeGame();
+      const urlParams = new URLSearchParams(window.location.search);
+      const vehParam = urlParams.get('veh');
+      if (vehParam && this.game.vehicle) {
+        this.game.vehicle.setVehicle(vehParam);
+      }
+      const camParam = urlParams.get('cam');
+      if (camParam && this.game.vehicle) {
+        this.game.vehicle.cameraMode = camParam;
+      }
       if (window.location.search.includes('speed=1')) {
         this.game.vehicle.speedKmh = 90.0;
         this.game.input.keys.throttle = true;
@@ -44,6 +53,17 @@ class UIController {
       btnPause.addEventListener('click', () => {
         this.game.sound.playClick();
         this.game.togglePause();
+      });
+    }
+
+    const btnVehicle = document.getElementById('btn-hud-vehicle');
+    if (btnVehicle) {
+      btnVehicle.addEventListener('click', () => {
+        if (this.game && this.game.sound) this.game.sound.playClick();
+        this.game.vehicle.cycleVehicle();
+        this.showAlert('VEHICLE: ' + this.game.vehicle.metrics.name.toUpperCase());
+        const elVeh = document.getElementById('hud-vehicle-name');
+        if (elVeh) elVeh.innerText = this.game.vehicle.metrics.name.toUpperCase();
       });
     }
 
@@ -167,6 +187,11 @@ class UIController {
         this.elTimer.innerText = "FREE CRUISE";
         if (this.elCheckpoint) this.elCheckpoint.innerText = "SCENIC ROUTE";
       }
+    }
+
+    const elVeh = document.getElementById('hud-vehicle-name');
+    if (elVeh && telemetry.vehicleName) {
+      elVeh.innerText = telemetry.vehicleName.toUpperCase();
     }
 
     if (this.elModePill) {

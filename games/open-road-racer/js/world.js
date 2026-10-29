@@ -20,9 +20,9 @@ class WorldGenerator {
     this.terrainMesh = null;
     this.guardrailMesh = null;
     this.checkpoints = [];
-    this.roadWidth = 10.0;       // 2 wide lanes (5.0m each)
-    this.curbWidth = 0.55;       // Concrete curb
-    this.shoulderWidth = 4.0;    // Laterite gravel shoulder
+    this.roadWidth = 6.4;        // Authentic European/Mountain 2-lane road (3.2m per lane)
+    this.curbWidth = 0.35;       // Concrete curb
+    this.shoulderWidth = 1.8;    // Laterite gravel shoulder
     this.totalLength = 0;
     this.pointsCount = 1400;     // High longitudinal resolution (every ~2.3m)
     this.repeatsCount = 240;     // Road marking repetition (~13.3m per cycle)
@@ -73,7 +73,7 @@ class WorldGenerator {
     this.scene.fog = new THREE.FogExp2(fogColor, 0.0014);
 
     // Ambient light: bright sky above, rich terrain bounce below
-    const hemiLight = new THREE.HemisphereLight(0xdce9f6, 0x2b3d26, 0.75);
+    const hemiLight = new THREE.HemisphereLight(0xdce9f6, 0x38393d, 0.75);
     this.scene.add(hemiLight);
 
     // Warm directional sunlight
@@ -204,7 +204,7 @@ class WorldGenerator {
     const ctx = canvas.getContext('2d');
 
     // Rich dark charcoal mountain asphalt
-    ctx.fillStyle = '#22252c';
+    ctx.fillStyle = '#23252a';
     ctx.fillRect(0, 0, 2048, 2048);
 
     // Realistic asphalt micro-aggregate noise
@@ -238,7 +238,7 @@ class WorldGenerator {
     // 2. Load authored Fastroads road texture if available
     const textureLoader = new THREE.TextureLoader();
     textureLoader.load(
-      'assets/textures/road.jpg',
+      'assets/textures/road.webp',
       (tex) => {
         tex.wrapS = THREE.RepeatWrapping;
         tex.wrapT = THREE.RepeatWrapping;

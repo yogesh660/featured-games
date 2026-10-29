@@ -55,6 +55,9 @@ class InputManager {
       if (e.code === 'KeyC') {
         this.keys.changeCamera = true;
       }
+      if (e.code === 'KeyV') {
+        this.keys.switchVehicle = true;
+      }
       if (e.code === 'KeyR') {
         this.keys.reset = true;
       }
