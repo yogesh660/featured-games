@@ -2,55 +2,194 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FPV Time Trial — Featured Games</title>
-  <link rel="stylesheet" href="../../site.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#070709">
+  <title>FPV Micro Drones Simulator — Liftoff Style Browser FPV</title>
+  <link rel="stylesheet" href="css/game.css">
+  <!-- Pinned Three.js CDN (r128) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-  <nav id="nav">
-    <a class="mark" href="../../index.html">YA<span>.</span></a>
-    <div class="navlinks">
-      <a href="../../index.html">All Games</a>
-      <a href="../open-road-racer/index.html">Open Road Racer</a>
-      <span class="nav-badge">Stage 4 Pipeline</span>
-    </div>
-  </nav>
 
-  <div class="container">
-    <div class="hero">
-      <span class="kicker">Game 04 · FPV Drone Racing</span>
-      <h1>FPV Time Trial</h1>
-      <p>A first-person acrobatic drone racing experience featuring 3D obstacle gates, split-second checkpoint timing, assist modes, and personal best time chases.</p>
-    </div>
+  <!-- WebGL 3D Canvas -->
+  <div id="canvas-container"></div>
 
-    <div class="featured-card">
-      <div class="featured-content">
-        <div>
-          <div class="badge-live" style="background: rgba(154, 154, 165, 0.12); color: var(--muted); border-color: var(--line);">
-            <div class="pulse-dot" style="background: var(--muted); box-shadow: 0 0 8px var(--muted);"></div> Scheduled in Daily Pipeline
-          </div>
-          <div class="featured-title">Under Automated Daily Development</div>
-          <p class="featured-desc">
-            Complete design specification saved in <code>docs/fpv-time-trial-gdd.md</code>. Development will proceed through arcade flight physics, gate trigger collision, ghost lines, and assist toggles.
-          </p>
-          <div class="feature-tags">
-            <span class="feature-tag">Three.js 3D</span>
-            <span class="feature-tag">Arcade Flight Physics</span>
-            <span class="feature-tag">Gate Collision</span>
-            <span class="feature-tag">Time Penalties & Assists</span>
-          </div>
-          <div style="display:flex; gap:12px;">
-            <a href="../open-road-racer/index.html" class="btn btn-primary">Play Open Road Racer (Ready)</a>
-            <a href="../../index.html" class="btn btn-secondary">← Back to Hub</a>
-          </div>
+  <!-- FPV Analog Scanline & Static Goggle Overlay -->
+  <div id="fpv-static-overlay"></div>
+
+  <!-- FPV On-Screen Display (OSD) Overlay -->
+  <div id="hud-overlay">
+    
+    <!-- Top HUD Header -->
+    <div class="hud-top">
+      <div class="hud-pill">
+        <a href="../../index.html" class="hud-btn" title="Back to Games Portal" style="text-decoration:none; padding:4px 8px;">✕</a>
+        <div class="hud-brand">
+          <div class="dot"></div>
+          <span id="hud-track-name">Loft Micro Slalom</span>
         </div>
+        <div class="hud-timer" id="hud-timer">00:00.00</div>
+        <div class="hud-gate-info" id="hud-gate-info">GATE 1/6 · LAP 1/2</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="hud-btn-group hud-interactive">
+        <button class="hud-btn" id="btn-drone">🚁 DRONES</button>
+        <button class="hud-btn" id="btn-env">🗺 MAPS</button>
+        <button class="hud-btn" id="btn-rates">⚙ RATES</button>
+        <button class="hud-btn" id="btn-cam">CAM: FPV</button>
+        <button class="hud-btn" id="btn-mode-toggle">MODE</button>
+        <button class="hud-btn" id="btn-reset" title="Reset Drone (R)">↺ RESET</button>
+        <button class="hud-btn" id="btn-audio" title="Toggle Sound">🔊 AUDIO</button>
+      </div>
+    </div>
+
+    <!-- Center Artificial Horizon Ladder & Reticle -->
+    <div id="osd-center">
+      <div class="osd-crosshair"></div>
+      <div class="osd-horizon-ladder" id="osd-horizon-ladder">
+        <div class="osd-horizon-line"></div>
+      </div>
+    </div>
+
+    <!-- Target Gate Direction & Distance Badge -->
+    <div id="gate-target-arrow">
+      TARGET: Start Gate 0.0m
+    </div>
+
+    <!-- Left Throttle Gauge -->
+    <div class="osd-throttle-bar">
+      <div class="osd-throttle-fill" id="osd-throttle-fill"></div>
+    </div>
+    <div class="osd-throttle-label" id="osd-throttle-val">0%</div>
+
+    <!-- Center Race Alerts & Countdown -->
+    <div id="hud-alert">3</div>
+
+    <!-- Bottom Telemetry HUD -->
+    <div class="hud-bottom">
+      <div class="osd-telemetry">
+        <div>DRONE: <span class="highlight" id="hud-drone-name">Nano Bee 65</span> (<span id="hud-drone-category">Micro Drone</span>)</div>
+        <div>BEST TIME: <span class="highlight" id="hud-best-time-val">--:--.--</span></div>
+        <div id="hud-gamepad-badge" style="font-size:11px; margin-top:2px; color:#9ca3af;">⌨ KEYBOARD MODE (OR PLUG IN USB RC TRANSMITTER)</div>
+      </div>
+
+      <div class="osd-telemetry" style="text-align: right;">
+        <div>SPEED: <span class="highlight" id="osd-speed-val">0</span> KM/H</div>
+        <div>BATT: <span class="highlight" id="osd-volt-val">4.20</span>V</div>
+        <div style="margin-top:4px;">
+          <span class="osd-flight-mode angle" id="osd-flight-mode">ANGLE</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Touch Virtual Sticks (Mobile Support) -->
+  <div class="touch-zone" id="touch-left">
+    <div class="touch-knob"></div>
+  </div>
+  <div class="touch-zone" id="touch-right">
+    <div class="touch-knob"></div>
+  </div>
+
+  <!-- MODAL 1: Drone Fleet Hangar Selection -->
+  <div class="modal-overlay" id="modal-drone">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">🚁 FPV Drone Fleet Hangar</div>
+        <button class="modal-close" id="close-modal-drone">&times;</button>
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted);">
+        Select from authentic micro-whoops to heavyweight 5-inch racing quads. Each has unique mass, motor spool latency, aerodynamic duct drag, and camera tilt.
+      </p>
+      <div class="cards-grid" id="drone-cards-container"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: Environment Selector -->
+  <div class="modal-overlay" id="modal-env">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">🗺 Select Environment & Course</div>
+        <button class="modal-close" id="close-modal-env">&times;</button>
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted);">
+        From tight indoor living rooms with chair slalom to industrial warehouse acrobatic complexes and outdoor high-speed canyons.
+      </p>
+      <div class="cards-grid" id="env-cards-container"></div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: Betaflight Rates & Flight Settings -->
+  <div class="modal-overlay" id="modal-rates">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">⚙ Betaflight Rates & Controller Tuning</div>
+        <button class="modal-close" id="close-modal-rates">&times;</button>
+      </div>
+
+      <!-- Presets Dropdown -->
+      <div class="form-group">
+        <label style="font-size:12px; font-weight:600; color:var(--cyan-neon);">RATE PRESETS</label>
+        <select id="rates-preset-select" style="background:#1e2230; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; outline:none; font-family:var(--osd-font);">
+          <option value="micro-indoor">Liftoff: Micro Drones (Calm Center / Micro Precision)</option>
+          <option value="freestyle">Freestyle Acro (Smooth Juicy Flow)</option>
+          <option value="race-fast">High-Speed 5-Inch Racing (Aggressive Top End)</option>
+          <option value="beginner-stabilized">Gentle Beginner (Low Rates)</option>
+        </select>
+      </div>
+
+      <!-- Rate Sliders -->
+      <div class="form-group">
+        <div class="form-label-row">
+          <span>Center Sensitivity (deg/s):</span>
+          <span id="center-val-display" style="color:var(--cyan-neon); font-family:var(--osd-font);">80 deg/s</span>
+        </div>
+        <input type="range" class="slider-input" id="rate-center" min="30" max="250" value="80">
+      </div>
+
+      <div class="form-group">
+        <div class="form-label-row">
+          <span>Max Rotation Rate (deg/s):</span>
+          <span id="max-val-display" style="color:var(--cyan-neon); font-family:var(--osd-font);">670 deg/s</span>
+        </div>
+        <input type="range" class="slider-input" id="rate-max" min="300" max="1200" value="670">
+      </div>
+
+      <div class="form-group">
+        <div class="form-label-row">
+          <span>Actual Expo:</span>
+          <span id="expo-val-display" style="color:var(--cyan-neon); font-family:var(--osd-font);">0.52</span>
+        </div>
+        <input type="range" class="slider-input" id="rate-expo" min="0" max="95" value="52">
+      </div>
+
+      <div class="form-group">
+        <div class="form-label-row">
+          <span>FPV Camera Tilt Angle:</span>
+          <span id="tilt-val-display" style="color:var(--cyan-neon); font-family:var(--osd-font);">20°</span>
+        </div>
+        <input type="range" class="slider-input" id="camera-tilt-input" min="0" max="60" value="20">
+      </div>
+
+      <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+        <strong style="color: #fff;">Controller Guide:</strong><br>
+        • <strong>RC Radios / Gamepads:</strong> Connect Radiomaster, FrSky, TBS, or Xbox controller via USB. Automatically recognized in Mode 2 (Left stick: Throttle/Yaw, Right stick: Pitch/Roll).<br>
+        • <strong>Keyboard:</strong> Space/W = Throttle Up, Ctrl/S = Throttle Down, Arrow Keys/IJKL = Pitch & Roll, Q/E = Yaw, R = Reset, T = Turtle Mode Flip, C = Toggle FPV/Chase Cam, M = Toggle Acro/Angle Mode.
       </div>
     </div>
   </div>
 
-  <footer>
-    <div>Yogesh Awate · Featured Games Collection</div>
-    <a href="https://yogesh660.github.io" target="_blank">yogesh660.github.io ↗</a>
-  </footer>
+  <!-- Game Scripts -->
+  <script src="js/rates.js"></script>
+  <script src="js/drone_specs.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/environments.js"></script>
+  <script src="js/tracks.js"></script>
+  <script src="js/controls.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+
 </body>
 </html>
