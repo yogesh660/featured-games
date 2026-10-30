@@ -24,20 +24,18 @@ live in `assets/games.css`. Links to the other sections are root-relative (`/wor
 
 ---
 
-## 🏎️ Game 01: Open Road Racer (Playable Now)
+## 🏎️ Game 01: Open Road (Playable Now)
 
-Inspired by relaxing exploration games (*Slow Roads*), set across the winding ghats and basalt escarpments of India's **Western Ghats / Sahyadri**:
+An endless, relaxed drive up the Sahyadri (Western Ghats), in the spirit of *slow roads* but built from scratch with our own look.
+Every asset is made in code: there are no model, texture or audio files.
 
-* **Continuous 3D Road Spline:** Procedurally generated Catmull-Rom mountain pass ribbon with asphalt shaders, yellow dashed center lines, and elevation crests.
-* **Western Ghats Scenery:** Layered basalt cliffs, laterite red soil shoulders, rolling monsoon emerald hills, and instanced umbrella-canopy trees.
-* **Realistic Arcade Vehicle Dynamics:** Low-poly GT coupe with 5-speed simulated transmission, RPM-based power curves, nose-dip braking pitch, lateral body roll, and off-road slowdown with guardrails.
-* **100% Procedural Web Audio Engine:** Dual harmonic engine oscillators, RPM pitch shifting, tire skid noise, wind rush scaling with velocity, and checkpoint chimes (zero external audio files).
-* **Dual Cameras:** Dynamic Chase camera (with speed-sensitive FOV) and Cockpit / Hood camera (toggle with `C`).
-* **Modes & HUD:** Free Cruise and Time Trial modes with lap timer, checkpoint gate arches, speed dial, gear indicator, and persistent local records in `localStorage`.
-* **Controls:**
-  * **Desktop:** `W` / `↑` Accelerate, `S` / `↓` Brake/Reverse, `A` / `D` or `←` / `→` Steer, `Space` Drift/Handbrake, `C` Camera, `R` Reset, `Esc` Pause.
-  * **Mobile:** On-screen virtual steering buttons and gas/brake pedals.
-* **Adjustable Graphics Fidelity:** In-game settings modal with Low, Medium, and High presets for smooth frame rates on any device.
+* **Endless road:** heading and height are sums of slow sine waves of the distance travelled, so the road is smooth and never repeats.
+* **Ghat terrain:** a ribbon of ground either side of the road; one side climbs into a basalt cliff, the other drops to the valley behind a painted parapet. Laterite shoulders, rain trees, rocks, verge posts and kilometre stones counting down to hill stations.
+* **Light and weather:** dawn, day, golden hour, night (headlights) or a slow day cycle; a monsoon mode with rain, haze and wet roads.
+* **Driving:** arcade bicycle-model physics with a five-speed box, gravity on slopes, handbrake slides and three grip levels; autodrive keeps the left lane and slows for bends.
+* **Sound:** engine, wind, road, tyre and rain noise synthesised live with the Web Audio API.
+* **Controls:** `W/↑` throttle, `S/↓` brake and reverse, `A/D` steer, `Space` handbrake, `F` autodrive, `C` camera, `R` back on the road, `M` mute, `Esc` settings. Touch buttons on phones.
+* **Code:** `games/open-road-racer/js/` holds `world.js` (road, terrain, scenery, sky, rain), `car.js` (model and physics), `audio.js` and `main.js` (loop, camera, light, UI).
 
 ---
 
