@@ -1,0 +1,117 @@
+/* Play hub. Everything shared (tokens, nav, hero, buttons, reveals, contact, footer) comes from
+   site.css, a verbatim copy of the portfolio's. This file only adds the game artwork and cards. */
+
+/* ---------- hero ---------- */
+.play-hero .hero-visual { grid-area: portrait; position: relative; align-self: stretch; margin: 0; min-height: 420px; }
+.play-hero .hero-name { top: 6%; z-index: 1; }
+.play-hero .arcade { position: absolute; inset: 14% -4% 2%; overflow: hidden; perspective: 320px;
+  background: linear-gradient(transparent 0, #1a1036aa 40%, #2a1650 55%, transparent 55.2%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 62% at 50% 55%, #000 50%, transparent 100%); mask-image: radial-gradient(ellipse 60% 62% at 50% 55%, #000 50%, transparent 100%); }
+.play-hero .arcade .pad { left: 74%; top: 16%; }
+.play-hero .arcade .pad .i { width: clamp(80px, 8vw, 120px); }
+.js .play-hero .arcade { animation: portrait-in 1.3s var(--ease) both .15s; }
+.hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 18px; margin-bottom: 22px; }
+.hero-stats div { border-top: 1px solid var(--line); padding-top: 12px; }
+.hero-stats strong { display: block; font-size: clamp(28px, 2.6vw, 38px); font-weight: 400; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.hero-stats span { display: block; margin-top: 6px; font: 400 11px var(--mono); letter-spacing: .06em; color: var(--muted); }
+
+/* the synthwave scene, also used small on the portfolio home */
+.arcade .sun { position: absolute; left: 50%; bottom: 45%; width: 30%; aspect-ratio: 1; translate: -50% 0; border-radius: 50%; background: linear-gradient(#ffd27a, #ff6fae 60%, #8c7cff); opacity: .85; filter: drop-shadow(0 0 40px #ff6fae66);
+  --stripes: linear-gradient(#000 0 56%, transparent 56% 60%, #000 60% 68%, transparent 68% 73%, #000 73% 80%, transparent 80% 86%, #000 86% 91%, transparent 91%);
+  -webkit-mask-image: var(--stripes); mask-image: var(--stripes); }
+.arcade .floor { position: absolute; left: -60%; right: -60%; top: 55%; height: 130%; transform-origin: top; transform: rotateX(64deg);
+  background-image: linear-gradient(#8c7cff66 1.5px, transparent 1.5px), linear-gradient(90deg, #56d9ff55 1.5px, transparent 1.5px);
+  background-size: 56px 56px; animation: floor 1.8s linear infinite; -webkit-mask-image: linear-gradient(transparent, #000 30%); mask-image: linear-gradient(transparent, #000 30%); }
+@keyframes floor { to { background-position: 0 56px; } }
+.arcade .pad { position: absolute; z-index: 1; left: 50%; right: auto; top: 14%; translate: -50% 0; color: #b3abff; filter: drop-shadow(0 0 36px #8c7cffaa); animation: float 5s ease-in-out infinite; }
+.arcade .pad .i { width: clamp(110px, 12vw, 180px); height: auto; aspect-ratio: 1; stroke-width: .9; }
+
+/* ---------- game cards ---------- */
+.games { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.game { display: flex; flex-direction: column; border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); overflow: hidden;
+  transition: border-color .3s, translate .4s var(--ease), opacity .8s var(--ease), transform .8s var(--ease); }
+.game:hover { border-color: #8c7cff66; translate: 0 -5px; }
+.game .art { position: relative; display: block; aspect-ratio: 16 / 8.2; overflow: hidden; border-bottom: 1px solid var(--line); isolation: isolate; }
+.game .art .word { position: absolute; z-index: 3; left: 20px; bottom: 8px; font: 700 clamp(44px, 5vw, 76px)/.9 var(--sans); letter-spacing: -.07em; color: #ffffff12; transition: color .5s, transform .6s var(--ease); }
+.game:hover .art .word { color: #ffffff22; transform: translateX(6px); }
+.game .body { display: flex; flex-direction: column; gap: 14px; padding: 26px 28px 28px; flex: 1; }
+.game .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.game small { font-size: 11.5px; color: var(--violet-2); }
+.game h3 { font-size: clamp(24px, 2.4vw, 32px); font-weight: 500; letter-spacing: -.035em; line-height: 1.15; }
+.game p { color: var(--muted); font-size: 14.5px; line-height: 1.7; }
+.game .keys { font: 400 12px var(--mono); color: var(--dim); letter-spacing: .02em; }
+.game .keys kbd { font: inherit; color: var(--soft); border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 6px; padding: 1px 6px; }
+.game .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; padding-top: 8px; }
+.game.wide { grid-column: 1 / -1; flex-direction: row; }
+.game.wide .art { flex: 1.25; aspect-ratio: auto; min-height: 380px; border-bottom: 0; border-right: 1px solid var(--line); }
+.game.wide .body { flex: 1; justify-content: center; padding: clamp(28px, 4vw, 48px); }
+.game.wide h3 { font-size: clamp(32px, 3.6vw, 52px); }
+
+/* Open Road Racer: hills, a winding road and dashes rushing past */
+.art-road { background: linear-gradient(#141030 0, #3a1f4a 34%, #ff8a5c 52%, #1b1626 52.4%); perspective: 220px; perspective-origin: 50% 52.4%; }
+.art-road .sun { position: absolute; left: 62%; top: 26%; width: 16%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(#ffe2a8, #ff9a5c 60%, transparent 70%); filter: blur(1px); }
+.art-road .hills { position: absolute; inset: 30% 0 47%; background: #24183a; clip-path: polygon(0 100%, 0 55%, 12% 30%, 24% 52%, 38% 10%, 52% 48%, 63% 26%, 78% 58%, 90% 22%, 100% 44%, 100% 100%); }
+.art-road .hills.near { inset: 38% 0 47%; background: #170f26; clip-path: polygon(0 100%, 0 40%, 18% 70%, 30% 35%, 46% 75%, 60% 45%, 74% 80%, 88% 38%, 100% 66%, 100% 100%); }
+.art-road .road { position: absolute; left: -300%; right: -300%; bottom: 0; height: 520%; transform-origin: bottom; transform: rotateX(84deg);
+  background: linear-gradient(90deg, transparent 45.6%, #d9d9e0 45.6%, #d9d9e0 45.9%, #3a3a46 45.9%, #3a3a46 54.1%, #d9d9e0 54.1%, #d9d9e0 54.4%, transparent 54.4%),
+              linear-gradient(90deg, #122318, #1b3a23 40%, #1b3a23 60%, #122318); }
+.art-road .road::after { content: ""; position: absolute; left: calc(50% - 3px); width: 6px; top: 0; bottom: 0;
+  background: linear-gradient(#ffd34d 0 50%, transparent 50%) 0 0 / 6px 80px; animation: dashes .5s linear infinite; }
+@keyframes dashes { to { background-position: 0 80px; } }
+.game:hover .art-road .road::after { animation-duration: .25s; }
+
+/* Space Defender: a starfield scrolling past a ship holding the line */
+.art-space { background: radial-gradient(circle at 50% 120%, #2a1d6b, #0a0a18 60%); }
+.art-space .stars, .art-space .stars.far { position: absolute; inset: 0;
+  background-image: radial-gradient(1.5px 1.5px at 20px 30px, #fff, transparent), radial-gradient(1px 1px at 90px 80px, #cfd8ff, transparent), radial-gradient(1.5px 1.5px at 150px 20px, #b3abff, transparent), radial-gradient(1px 1px at 60px 130px, #fff, transparent);
+  background-size: 180px 160px; animation: stars 6s linear infinite; }
+.art-space .stars.far { opacity: .5; background-size: 120px 110px; animation-duration: 12s; }
+@keyframes stars { to { background-position: 0 160px; } }
+.art-space .ship { position: absolute; left: 50%; bottom: 14%; width: 46px; height: 52px; translate: -50% 0; background: linear-gradient(#e9e6ff, #8c7cff); clip-path: polygon(50% 0, 100% 100%, 50% 78%, 0 100%); filter: drop-shadow(0 0 14px #8c7cff); animation: strafe 4s ease-in-out infinite; }
+.art-space .shot-line { position: absolute; left: 50%; bottom: 30%; width: 3px; height: 26px; border-radius: 3px; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); animation: strafe 4s ease-in-out infinite, fire .7s linear infinite; }
+.art-space .invaders { position: absolute; left: 50%; top: 14%; translate: -50% 0; display: grid; grid-template-columns: repeat(6, 22px); gap: 14px 18px; animation: march 3s ease-in-out infinite alternate; }
+.art-space .invaders i { width: 22px; height: 14px; background: #74df9b; clip-path: polygon(0 40%, 20% 0, 80% 0, 100% 40%, 100% 100%, 75% 70%, 50% 100%, 25% 70%, 0 100%); opacity: .85; }
+.art-space .invaders i:nth-child(n+7) { background: #ff6fae; }
+@keyframes strafe { 0%, 100% { transform: translateX(-60px); } 50% { transform: translateX(60px); } }
+@keyframes fire { from { bottom: 30%; opacity: 1; } to { bottom: 80%; opacity: 0; } }
+@keyframes march { to { transform: translateX(34px); } }
+
+/* Neural Puzzle: a circuit lighting up through a grid of tiles */
+.art-neural { background: radial-gradient(circle at 50% 50%, #18163a, #0b0b10 75%); display: grid; place-items: center; }
+.art-neural svg { width: 78%; height: 78%; }
+.art-neural .tile { fill: #ffffff05; stroke: #ffffff12; }
+.art-neural .wire { fill: none; stroke: #ffffff1a; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.art-neural .current { fill: none; stroke: var(--cyan); stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100 100; stroke-dashoffset: 100; filter: drop-shadow(0 0 6px var(--cyan)); animation: current 3.6s var(--ease) infinite; }
+.art-neural .node { fill: #14142a; stroke: var(--violet); stroke-width: 3; }
+.art-neural .node.end { stroke: var(--green); animation: lit 3.6s infinite; }
+@keyframes current { 0% { stroke-dashoffset: 100; } 55%, 80% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes lit { 0%, 50% { fill: #14142a; } 58%, 82% { fill: var(--green); } 100% { fill: #14142a; } }
+
+/* FPV Micro Drones: gates rushing towards a drone */
+.art-fpv { background: linear-gradient(#0e1a2c, #0b0b10 70%); perspective: 400px; }
+.art-fpv .gate { position: absolute; left: 50%; top: 46%; width: 40%; aspect-ratio: 1.4; translate: -50% -50%; border: 3px solid #ff9a3c; border-radius: 8px; box-shadow: 0 0 18px #ff9a3c88, inset 0 0 18px #ff9a3c44; animation: gate 3s linear infinite; opacity: 0; }
+.art-fpv .gate:nth-child(2) { animation-delay: -1s; border-color: var(--cyan); box-shadow: 0 0 18px #56d9ff88, inset 0 0 18px #56d9ff44; }
+.art-fpv .gate:nth-child(3) { animation-delay: -2s; }
+@keyframes gate { 0% { transform: scale(.15); opacity: 0; } 20% { opacity: 1; } 85% { opacity: 1; } 100% { transform: scale(2.6); opacity: 0; } }
+.art-fpv .drone { position: absolute; left: 50%; top: 58%; translate: -50% -50%; width: 84px; color: #e9e6ff; filter: drop-shadow(0 0 14px #8c7cffaa); animation: hover-bob 2.4s ease-in-out infinite; }
+.art-fpv .drone circle { fill: none; stroke: currentColor; stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: spin .25s linear infinite; stroke-dasharray: 12 6; }
+.art-fpv .drone path { stroke: currentColor; stroke-width: 3; stroke-linecap: round; fill: none; }
+@keyframes hover-bob { 50% { transform: translateY(-8px) rotate(-3deg); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1100px) {
+  .games { grid-template-columns: 1fr 1fr; }
+  .game:last-child { grid-column: 1 / -1; }
+  .play-hero .hero-visual { min-height: 460px; }
+  .game.wide { flex-direction: column; }
+  .game.wide .art { min-height: 0; aspect-ratio: 16 / 8.2; border-right: 0; border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 760px) {
+  .play-hero .hero-visual { min-height: 300px; margin: 18px 0 0; }
+  .play-hero .arcade { inset: 4% 0 0; }
+  .play-hero .hero-side { margin-top: 18px; }
+  .games { grid-template-columns: 1fr; }
+  .game:last-child { grid-column: auto; }
+  .game .body, .game.wide .body { padding: 22px; }
+}
