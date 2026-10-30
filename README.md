@@ -9,7 +9,7 @@ A collection of polished, responsive browser games hosted for free on GitHub Pag
 | Title | Genre | Tech | Status | Path |
 |---|---|---|---|---|
 | **Open Road Racer** | 3D Scenic Mountain Driving & Time Trial | Three.js (r128), Web Audio API | **Playable Now** | [`games/open-road-racer/`](games/open-road-racer/index.html) |
-| **Space Defender** | Arcade Wave Shooter & Upgrades | Canvas 2D, Particle Pools | *Scheduled (Step 4–6)* | [`games/space-defender/`](games/space-defender/index.html) |
+| **Space Defender** | 3D Arcade Wave Shooter | Three.js, Web Audio | *Scheduled (Step 4–6)* | [`games/space-defender/`](games/space-defender/index.html) |
 | **Neural Puzzle** | Logic & Pattern Circuit Routing | CSS Grid, Graph Traversal | *Scheduled (Step 7–9)* | [`games/neural-puzzle/`](games/neural-puzzle/index.html) |
 | **FPV Time Trial** | Acrobatic Drone Racing Obstacle Course | Three.js 3D, Flight Physics | *Scheduled (Step 10–12)* | [`games/fpv-time-trial/`](games/fpv-time-trial/index.html) |
 
@@ -23,6 +23,16 @@ do not edit them here, copy them over from yogesh660.github.io. Hub-only styles 
 live in `assets/games.css`. Links to the other sections are root-relative (`/work/`, `/ml-model-zoo/`).
 
 ---
+
+## 🚀 Space Defender (3D)
+
+Hold the line above a neon grid while waves come out of deep space. Built from scratch with Three.js; sound and music are synthesised with Web Audio.
+
+* **Physics:** the ship has mass (thrust, drag, banking, a dash impulse); hits knock enemies back by their mass; asteroids tumble, collide with each other and split, carrying their momentum on; wrecks throw debris.
+* **Enemies:** weaving drones that aim ahead of you, kamikazes that steer at you, cruisers that fire in fans, asteroids, and a dreadnought every fifth wave (shoot its four pods to open the core).
+* **Scoring:** kills inside two seconds of each other raise a multiplier up to ×10; getting hit halves it. Best score is saved in the browser.
+* **Power-ups:** spread shot, rapid fire, shield, hull repair, extra bomb; they drift to you when close.
+* **Controls:** `WASD` or the mouse to fly, fire is automatic (`F` to switch to holding `Space`), `Shift` dash, `B` bomb, `Esc` pause, `M` mute. Touch: drag to fly, double-tap to bomb.
 
 ## 🏎️ Game 01: Open Road (Playable Now)
 
