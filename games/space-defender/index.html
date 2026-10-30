@@ -1,204 +1,81 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#05060b">
-  <title>Space Defender — Featured Games</title>
-  <link rel="stylesheet" href="css/game.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#05040c">
+<title>Space Defender · Play · Yogesh Awate</title>
+<meta name="description" content="A 3D arcade shooter in the browser: hold the line against waves, chain kills, beat the dreadnought. Built from scratch with Three.js and Web Audio.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/game.css?v=1">
 </head>
 <body>
+<div id="stage"></div>
+<p id="loading">Charging lasers…</p>
+<div id="flash"></div>
+<div id="pops"></div>
 
-  <div id="game-container">
-    <!-- Main 2D Canvas -->
-    <canvas id="game-canvas"></canvas>
-
-    <!-- CRT Scanline & Glow Overlay -->
-    <div id="crt-overlay"></div>
-
-    <!-- In-Game HUD -->
-    <div id="hud-layer">
-      <!-- Top Header -->
-      <div class="hud-header">
-        <div class="hud-group">
-          <div class="hud-badge">
-            <span class="hud-badge-title">SCORE</span>
-            <span class="hud-badge-val" id="hud-score-val">0</span>
-          </div>
-          <div class="hud-badge">
-            <span class="hud-badge-title">HI-SCORE</span>
-            <span class="hud-badge-val" id="hud-highscore-val" style="color:var(--text-muted);">0</span>
-          </div>
-          <div class="hud-badge">
-            <span class="hud-badge-title">SECTOR</span>
-            <span class="hud-badge-val" id="hud-wave-val" style="color:var(--cyan);">WAVE 1</span>
-          </div>
-          <div class="hud-badge">
-            <span class="hud-badge-title">MULTIPLIER</span>
-            <span class="hud-badge-val" id="hud-multiplier-val" style="color:var(--amber);">x1.0</span>
-          </div>
-        </div>
-
-        <!-- Controls / Actions -->
-        <div class="hud-group hud-interactive">
-          <button class="hud-btn" id="btn-sound-toggle">🔊 SOUND ON</button>
-          <button class="hud-btn" id="btn-pause-toggle">⏸ PAUSE (P)</button>
-          <a href="../../index.html" class="hud-btn" style="text-decoration:none;">✕ EXIT</a>
-        </div>
-      </div>
-
-      <!-- Center Wave Alert Callout -->
-      <div id="hud-alert">WAVE 1 — INCOMING</div>
-
-      <!-- Bottom Status & Vitals -->
-      <div class="hud-footer">
-        <div class="hud-status-bars">
-          <!-- Shield Bar -->
-          <div class="bar-wrapper">
-            <div class="bar-fill bar-shield" id="bar-shield-fill" style="width: 100%;"></div>
-            <span class="bar-label">SHIELD</span>
-          </div>
-          <!-- Health Hull Bar -->
-          <div class="bar-wrapper">
-            <div class="bar-fill bar-health" id="bar-health-fill" style="width: 100%;"></div>
-            <span class="bar-label">HULL INTEGRITY</span>
-          </div>
-          <!-- Energy Booster Bar -->
-          <div class="bar-wrapper">
-            <div class="bar-fill bar-energy" id="bar-energy-fill" style="width: 100%;"></div>
-            <span class="bar-label">TURBO ENERGY (SHIFT)</span>
-          </div>
-        </div>
-
-        <!-- Center Active Perks -->
-        <div class="active-perks" id="hud-perks"></div>
-
-        <!-- Right Side Arsenal -->
-        <div class="hud-group">
-          <div class="hud-badge">
-            <span class="hud-badge-title">SMART BOMBS (B)</span>
-            <span class="hud-badge-val" id="hud-bombs-val" style="color:var(--purple);">⚡ x2</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mobile Virtual Controls -->
-    <div class="touch-zone" id="touch-stick">
-      <div class="touch-knob"></div>
-    </div>
-    <div id="touch-buttons">
-      <button class="touch-fire-btn" id="touch-btn-fire">FIRE</button>
-      <button class="touch-bomb-btn" id="touch-btn-bomb">⚡ BOMB</button>
-    </div>
-
-    <!-- MODAL 1: Title Screen & Ship Hangar -->
-    <div class="modal-overlay active" id="modal-title-screen">
-      <div class="modal-card">
-        <div class="game-title">SPACE DEFENDER</div>
-        <p class="game-tagline">
-          Protect deep-space research outposts from invading armada formations. Master inertial thrusters, plasma cannons, and tactical smart bombs.
-        </p>
-
-        <div style="font-size:12px; font-weight:700; letter-spacing:1.5px; color:var(--cyan); margin-bottom:12px; text-transform:uppercase;">
-          Select Starfighter Class
-        </div>
-
-        <div class="ship-grid">
-          <!-- Class 1 -->
-          <div class="ship-card selected" data-ship="interceptor">
-            <svg class="ship-preview" viewBox="-25 -25 50 50">
-              <path d="M0 -20 L14 12 L7 15 L0 8 L-7 15 L-14 12 Z" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
-              <ellipse cx="0" cy="-4" rx="2.5" ry="6" fill="#fff"/>
-            </svg>
-            <div class="ship-name">Interceptor Alpha</div>
-            <div class="ship-desc">Balanced combat fighter with dual rapid plasma cannons.</div>
-            <div class="stat-row"><span>SPEED:</span><span class="stat-dots">★★★★☆</span></div>
-            <div class="stat-row"><span>ARMOR:</span><span class="stat-dots">★★★☆☆</span></div>
-            <div class="stat-row"><span>FIRE RATE:</span><span class="stat-dots">★★★★☆</span></div>
-          </div>
-
-          <!-- Class 2 -->
-          <div class="ship-card" data-ship="valkyrie">
-            <svg class="ship-preview" viewBox="-25 -25 50 50">
-              <path d="M0 -18 L18 10 L10 16 L0 10 L-10 16 L-18 10 Z" fill="#0f172a" stroke="#f59e0b" stroke-width="2.2"/>
-              <ellipse cx="0" cy="-2" rx="3" ry="5" fill="#fff"/>
-            </svg>
-            <div class="ship-name">Valkyrie Heavy</div>
-            <div class="ship-desc">Reinforced hull with heavy kinetic shields and triple spread fire.</div>
-            <div class="stat-row"><span>SPEED:</span><span class="stat-dots">★★★☆☆</span></div>
-            <div class="stat-row"><span>ARMOR:</span><span class="stat-dots">★★★★★</span></div>
-            <div class="stat-row"><span>FIRE RATE:</span><span class="stat-dots">★★★☆☆</span></div>
-          </div>
-
-          <!-- Class 3 -->
-          <div class="ship-card" data-ship="phantom">
-            <svg class="ship-preview" viewBox="-25 -25 50 50">
-              <path d="M0 -22 L11 12 L0 6 L-11 12 Z" fill="#0f172a" stroke="#ec4899" stroke-width="2"/>
-              <ellipse cx="0" cy="-5" rx="2" ry="7" fill="#fff"/>
-            </svg>
-            <div class="ship-name">Phantom Scout</div>
-            <div class="ship-desc">Hyper-agile interceptor with ultra-fast blasters and high speed.</div>
-            <div class="stat-row"><span>SPEED:</span><span class="stat-dots">★★★★★</span></div>
-            <div class="stat-row"><span>ARMOR:</span><span class="stat-dots">★★☆☆☆</span></div>
-            <div class="stat-row"><span>FIRE RATE:</span><span class="stat-dots">★★★★★</span></div>
-          </div>
-        </div>
-
-        <button class="btn-launch" id="btn-start-game">LAUNCH STARFIGHTER</button>
-
-        <div style="margin-top:20px; font-size:12px; color:var(--text-muted); font-family:var(--font-mono);">
-          [WASD / Arrow Keys] Move · [Space / Click] Fire · [Shift] Turbo Boost · [B] Smart Bomb
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL 2: Pause Screen -->
-    <div class="modal-overlay" id="modal-pause-screen">
-      <div class="modal-card" style="max-width: 420px;">
-        <div class="game-title" style="font-size:32px;">SYSTEM PAUSED</div>
-        <p class="game-tagline">Flight systems suspended.</p>
-        <div style="display:flex; flex-direction:column; gap:12px;">
-          <button class="btn-launch" id="btn-resume-game">RESUME FLIGHT</button>
-          <a href="../../index.html" class="btn-secondary" style="text-decoration:none;">ABORT TO HUB</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL 3: Game Over Screen -->
-    <div class="modal-overlay" id="modal-gameover-screen">
-      <div class="modal-card" style="max-width: 480px;">
-        <div class="game-title" style="color:var(--rose); -webkit-text-fill-color: initial;">SHIP DESTROYED</div>
-        <p class="game-tagline">Outpost defenses compromised by alien armada.</p>
-
-        <div style="background:rgba(15,23,42,0.6); padding:16px; border-radius:10px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.1);">
-          <div style="font-size:13px; color:var(--text-muted); font-family:var(--font-mono);">FINAL COMBAT SCORE</div>
-          <div style="font-size:36px; font-weight:800; color:#fff; font-family:var(--font-mono); text-shadow:0 0 15px var(--cyan-glow);" id="gameover-score">
-            0
-          </div>
-          <div style="font-size:13px; color:var(--cyan); font-family:var(--font-mono); margin-top:4px;">
-            SECTOR REACHED: WAVE <span id="gameover-wave">1</span>
-          </div>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:12px;">
-          <button class="btn-launch" id="btn-restart-game">DEPLOY REPLACEMENT (R)</button>
-          <a href="../../index.html" class="btn-secondary" style="text-decoration:none;">RETURN TO PORTAL</a>
-        </div>
-      </div>
-    </div>
-
+<div class="hud">
+  <div class="tl">
+    <div class="score"><small>Score</small><b id="score">0</b></div>
+    <div class="combo"><b id="combo">×1</b><i></i></div>
   </div>
+  <div class="tr">
+    <span class="wave">Wave <b id="wave">1</b></span>
+    <button id="mute" type="button" aria-pressed="false" title="Sound (M)">Sound</button>
+    <button id="pause-btn" type="button" title="Pause (Esc)">❚❚</button>
+  </div>
+  <div class="bl">
+    <div class="bar hull"><small>Hull</small><span><i id="hp"></i></span></div>
+    <div class="bar shield"><small>Shield</small><span><i id="shield"></i></span></div>
+    <div id="powers" class="powers"></div>
+  </div>
+  <div class="br">
+    <button id="dash-btn" class="pad" type="button"><small>Dash</small><span><i id="dash-fill"></i></span><kbd>Shift</kbd></button>
+    <button id="bomb-btn" class="pad" type="button"><small>Bomb</small><b id="bombs">●●</b><kbd>B</kbd></button>
+  </div>
+  <div id="boss" class="boss" hidden><small>Dreadnought</small><span><i id="boss-bar"></i></span></div>
+</div>
+<div id="banner" class="banner"><b id="banner-title"></b><span id="banner-sub"></span></div>
+<p id="toast" class="toast" role="status"></p>
 
-  <!-- Game Scripts -->
-  <script src="js/audio.js"></script>
-  <script src="js/particles.js"></script>
-  <script src="js/entities.js"></script>
-  <script src="js/waves.js"></script>
-  <script src="js/game.js"></script>
+<section id="intro" class="screen">
+  <div class="card">
+    <a class="back" href="../../">← Play</a>
+    <p class="eyebrow">3D arcade · endless waves</p>
+    <h1>Space<br>Defender</h1>
+    <p class="lede">Hold the line above the grid. Chain kills to raise the multiplier, grab power-ups, dash through fire and take down the dreadnought every fifth wave.</p>
+    <div class="go"><button id="play" class="btn light" type="button">Launch</button><span class="best">Best <b id="best">0</b></span></div>
+    <ul class="keys">
+      <li><span>Move</span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or the mouse</li>
+      <li><span>Dash</span><kbd>Shift</kbd> invulnerable for a moment</li>
+      <li><span>Bomb</span><kbd>B</kbd> clears the screen</li>
+      <li><span>Fire</span>automatic · <kbd>F</kbd> to hold <kbd>Space</kbd> instead</li>
+      <li class="touch-only"><span>Touch</span>drag to fly · double-tap to bomb</li>
+    </ul>
+  </div>
+</section>
 
+<section id="pause" class="screen dim" hidden>
+  <div class="card small"><p class="eyebrow">Paused</p><h2>Take a breath.</h2>
+    <div class="go"><button id="resume" class="btn light" type="button">Resume</button><button id="quit" class="btn ghost" type="button">Main menu</button><a class="btn ghost" href="../../">Exit to Play</a></div></div>
+</section>
+
+<section id="over" class="screen dim" hidden>
+  <div class="card small">
+    <p class="eyebrow">Ship lost</p>
+    <h2 id="final-score">0</h2>
+    <p id="new-best" class="newbest" hidden>New best score</p>
+    <dl class="stats"><div><dt>Best</dt><dd id="final-best">0</dd></div><div><dt>Wave</dt><dd id="final-wave">1</dd></div><div><dt>Kills</dt><dd id="final-kills">0</dd></div></dl>
+    <div class="go"><button id="again" class="btn light" type="button">Fly again</button><a class="btn ghost" href="../../">Exit to Play</a></div>
+    <p class="hint"><kbd>Enter</kbd> to fly again</p>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/audio.js?v=1"></script>
+<script src="js/game.js?v=1"></script>
 </body>
 </html>
