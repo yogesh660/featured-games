@@ -51,10 +51,10 @@
 .ghat { position: absolute; inset: 0; width: 100%; height: 100%; transition: transform 1.2s var(--ease); }
 .game:hover .ghat { transform: scale(1.04); }
 .ghat .dash, .ghat .paint, .ghat .post, .ghat .wall { fill: none; stroke-width: var(--w); stroke-linecap: butt; }
-.ghat .dash { stroke: #efe9df; stroke-dasharray: calc(var(--g) * 1px) calc(var(--g) * 1.3px); animation: or-flow-dash var(--dur) linear infinite; }
-.ghat .wall { stroke: #17151a; }
-.ghat .paint { stroke: #e8b923; stroke-dasharray: calc(var(--g) * 1px) calc(var(--g) * 1px); animation: or-flow-paint var(--dur) linear infinite; }
-.ghat .post { stroke: #f1ede6; stroke-dasharray: 2px calc(var(--g) * 1px); animation: or-flow-post var(--dur) linear infinite; }
+.ghat .dash { stroke: #f5f5f7; stroke-dasharray: calc(var(--g) * 1px) calc(var(--g) * 1.3px); animation: or-flow-dash var(--dur) linear infinite; }
+.ghat .wall { stroke: #ff9a3c; stroke-opacity: .25; }
+.ghat .paint { stroke: #ffc94d; stroke-dasharray: calc(var(--g) * 1px) calc(var(--g) * 1px); animation: or-flow-paint var(--dur) linear infinite; }
+.ghat .post { stroke: #b3abff; stroke-dasharray: 2px calc(var(--g) * 1px); animation: or-flow-post var(--dur) linear infinite; }
 @keyframes or-flow-dash { to { stroke-dashoffset: calc(var(--g) * 2.3px); } }
 @keyframes or-flow-paint { to { stroke-dashoffset: calc(var(--g) * 2px); } }
 @keyframes or-flow-post { to { stroke-dashoffset: calc(var(--g) * 1px + 2px); } }
