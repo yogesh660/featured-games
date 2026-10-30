@@ -1,161 +1,165 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#070709">
-  <title>Featured Games — Yogesh Awate</title>
-  <meta name="description" content="A collection of polished, responsive browser games hosted on GitHub Pages.">
-  <link rel="stylesheet" href="site.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#070709">
+<title>Play · Yogesh Awate</title>
+<meta name="description" content="Browser games built from scratch by Yogesh Awate: a Western Ghats drive, an FPV drone simulator, an arcade shooter and a circuit puzzle.">
+<meta property="og:title" content="Play · Yogesh Awate">
+<meta property="og:description" content="Four browser games built from scratch. No installs, keyboard or touch.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://yogesh660.github.io/assets/yogesh-suit-cutout.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css?v=2">
+<link rel="stylesheet" href="assets/games.css?v=2">
+<script>document.documentElement.classList.add('js')</script>
 </head>
-<body class="page-games">
+<body class="page-play">
+<a class="skip" href="#main">Skip to content</a>
 
-  <!-- Top Navigation (Identical to yogesh660.github.io) -->
-  <nav id="nav">
-    <a class="mark" href="https://yogesh660.github.io" target="_blank" aria-label="Yogesh Awate, home">YA<span>.</span></a>
-    <div class="navlinks" id="navlinks">
-      <a href="https://yogesh660.github.io/work/" target="_blank">Work</a>
-      <a href="https://yogesh660.github.io/projects/" target="_blank">Open source</a>
-      <a href="index.html" class="active">Featured Games</a>
-      <a href="https://yogesh660.github.io/about/" target="_blank">About</a>
+<!-- Same five links as the portfolio and the Learn hub, so the three read as one site. -->
+<nav id="nav">
+  <div class="brand"><a class="mark" href="/" aria-label="Yogesh Awate, home">YA<span>.</span></a><a class="brand-sub" href="./">Play</a></div>
+  <div class="navlinks" id="navlinks">
+    <a href="/work/">Work</a>
+    <a href="/ml-model-zoo/">Learn</a>
+    <a href="./" class="active" aria-current="page">Play</a>
+    <a href="/about/">About</a>
+    <a href="#contact">Contact</a>
+    <a class="pill" href="mailto:awateyogeshs@gmail.com?subject=R%C3%A9sum%C3%A9%20request">Request résumé <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+  </div>
+  <button class="menu" id="menu" aria-label="Open menu" aria-expanded="false" aria-controls="navlinks"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+</nav>
+
+<main id="main">
+<header class="hero play-hero">
+  <div class="hero-stage" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  <div class="hero-card hero-intro">
+    <p class="availability rise" style="--d:1"><i></i>4 games · free · nothing to install</p>
+    <p class="kicker rise" style="--d:2">Games, made from scratch</p>
+    <h1><span class="line"><span class="rise" style="--d:3">Built to</span></span><span class="line"><span class="rise dim" style="--d:4">be played.</span></span></h1>
+    <p class="focus rise" style="--d:5">What I build when I am not building models: 3D driving and flight, an arcade shooter and a logic puzzle, all running in your browser with physics and sound written in code.</p>
+    <div class="actions rise" style="--d:6">
+      <a class="button light" href="games/open-road-racer/"><svg class="i" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg> Start driving</a>
+      <a class="button ghost" href="#games">All games</a>
     </div>
-  </nav>
+  </div>
 
-  <main class="container" id="main">
-    <!-- Hero Section -->
-    <header class="hero">
-      <span class="kicker">Interactive Web Experiences · GitHub Pages</span>
-      <h1>Featured Games</h1>
-      <p>Polished, playable browser games built with WebGL (Three.js), Canvas, and procedural Web Audio. Zero external plugins, zero accounts—pure client-side craftsmanship.</p>
-    </header>
+  <figure class="hero-visual" aria-hidden="true">
+    <div class="hero-name">PLAY</div>
+    <div class="arcade"><i class="sun"></i><i class="floor"></i><span class="pad"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12h4M8 10v4M15 13h.01M18 11h.01"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg></span></div>
+  </figure>
 
-    <!-- Hero Spotlight: Open Road Racer (Playable Now) -->
-    <section class="featured-card">
-      <div class="featured-content">
-        <div>
-          <div class="badge-live">
-            <div class="pulse-dot"></div> Live & Playable Now
-          </div>
-          <h2 class="featured-title">Open Road Racer</h2>
-          <p class="featured-desc">
-            A relaxing 3D mountain-road driving experience inspired by the winding passes of India's Western Ghats / Sahyadri. Featuring procedural road splines, dynamic elevation, responsive arcade physics, synthesized audio, and dual chase/cockpit cameras.
-          </p>
-
-          <div class="feature-tags">
-            <span class="feature-tag">Three.js 3D</span>
-            <span class="feature-tag">Sahyadri Scenery</span>
-            <span class="feature-tag">Time Trial & Free Cruise</span>
-            <span class="feature-tag">Web Audio Synth</span>
-            <span class="feature-tag">Touch & Keyboard</span>
-          </div>
-
-          <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-            <a href="games/open-road-racer/index.html" class="btn btn-primary">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-              Launch Open Road Racer
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Collection Grid -->
-    <div class="grid-title">
-      <span>Games Collection</span>
-      <span style="font-family: var(--mono); font-size: 13px; color: var(--muted); font-weight: 400;">4 Playable Titles</span>
+  <aside class="hero-card hero-side rise" style="--d:7">
+    <small>In the arcade</small>
+    <div class="hero-stats">
+      <div><strong data-count="4">4</strong><span>Playable games</span></div>
+      <div><strong data-count="2">2</strong><span>In full 3D</span></div>
+      <div><strong data-count="26">26</strong><span>Puzzle sectors</span></div>
+      <div><strong>0</strong><span>Audio files: all synthesised</span></div>
     </div>
+    <a class="side-cta" href="games/fpv-time-trial/"><svg class="i" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg> Fly an FPV drone <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+    <div class="quick-links">
+      <a href="games/space-defender/">Space Defender <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+      <a href="games/neural-puzzle/">Neural Puzzle <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+    </div>
+    <span class="where">Keyboard, touch or gamepad</span>
+  </aside>
+</header>
 
-    <div class="games-grid">
-      <!-- Game 01: Open Road Racer -->
-      <article class="game-card">
-        <div>
-          <div class="card-header">
-            <span class="card-num">GAME 01</span>
-            <span class="status-pill ready">Playable</span>
-          </div>
-          <h3 class="card-title">Open Road Racer</h3>
-          <p class="card-desc">
-            Cruising and time-trial runs through procedural Sahyadri ghats. Full 2-DOF vehicle physics, 3 switchable vehicles, gear simulation, and distance mist.
-          </p>
-        </div>
-        <div>
-          <div class="card-meta">
-            <span>Three.js / 3D</span>
-            <a href="games/open-road-racer/index.html" style="color: var(--violet-2); font-weight: 600;">Play Now →</a>
-          </div>
+<div class="marquee" aria-hidden="true"><div class="track"><span>Three.js</span><i></i><span>WebGL</span><i></i><span>Canvas 2D</span><i></i><span>Web Audio API</span><i></i><span>Procedural roads</span><i></i><span>Flight physics</span><i></i><span>Particle systems</span><i></i><span>Graph search</span><i></i><span>Touch controls</span><i></i><span>localStorage records</span><i></i><span>Three.js</span><i></i><span>WebGL</span><i></i><span>Canvas 2D</span><i></i><span>Web Audio API</span><i></i><span>Procedural roads</span><i></i><span>Flight physics</span><i></i><span>Particle systems</span><i></i><span>Graph search</span><i></i><span>Touch controls</span><i></i><span>localStorage records</span><i></i></div></div>
+
+<section class="section" id="games">
+  <div class="head reveal">
+    <div><span class="tag">01 / The games</span><h2>Pick one and play.</h2></div>
+    <p>Each one is a single page you can open on a laptop or a phone. Records are kept in your browser.</p>
+  </div>
+  <div class="games">
+      <article class="game wide spot reveal">
+        <a class="art art-road" href="games/open-road-racer/" tabindex="-1" aria-hidden="true"><i class="sun"></i><i class="hills"></i><i class="hills near"></i><i class="road"></i><span class="word">Drive</span></a>
+        <div class="body">
+          <div class="row"><small>01 · 3D driving · Three.js</small><span class="status live"><i></i>Playable</span></div>
+          <h3>Open Road Racer</h3>
+          <p>A relaxed drive over the winding ghats of the Sahyadri, India's Western Ghats. A procedural road that never ends, arcade car physics with gears and body roll, an engine synthesised live with Web Audio, and chase or cockpit cameras. Cruise freely or race the clock through checkpoint gates.</p>
+          <div class="chips"><span>Three.js</span><span>Procedural road</span><span>Web Audio engine</span><span>Time trial</span></div>
+          <p class="keys">W/↑ drive · A/D steer · Space drift · C camera</p>
+          <div class="links"><a class="button light small" href="games/open-road-racer/"><svg class="i" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg> Play Open Road Racer</a></div>
         </div>
       </article>
-
-      <!-- Game 02: Space Defender -->
-      <article class="game-card">
-        <div>
-          <div class="card-header">
-            <span class="card-num">GAME 02</span>
-            <span class="status-pill ready">Playable</span>
-          </div>
-          <h3 class="card-title">Space Defender</h3>
-          <p class="card-desc">
-            Fast, readable arcade wave shooter protecting deep-space outposts against escalating alien formations, 3 starfighter classes, smart bombs, and power-ups.
-          </p>
-        </div>
-        <div>
-          <div class="card-meta">
-            <span>Canvas 2D / Waves</span>
-            <a href="games/space-defender/index.html" style="color: var(--violet-2); font-weight: 600;">Play Now →</a>
-          </div>
+      <article class="game spot reveal">
+        <a class="art art-fpv" href="games/fpv-time-trial/" tabindex="-1" aria-hidden="true"><i class="gate"></i><i class="gate"></i><i class="gate"></i><svg class="drone" viewBox="0 0 100 70" aria-hidden="true"><path d="M22 18 78 52M78 18 22 52"/><path d="M40 30h20v10H40z"/>
+<circle cx="20" cy="16" r="14"/><circle cx="80" cy="16" r="14"/><circle cx="20" cy="54" r="14"/><circle cx="80" cy="54" r="14"/></svg><span class="word">Fly</span></a>
+        <div class="body">
+          <div class="row"><small>02 · Flight sim · Three.js</small><span class="status live"><i></i>Playable</span></div>
+          <h3>FPV Micro Drones</h3>
+          <p>A first-person drone simulator inspired by Liftoff. Fly anything from a 65 mm Tinywhoop to a 5-inch 6S quad through living rooms, a cyber hangar and canyon courses, on Betaflight Actual rates.</p>
+          <div class="chips"><span>Flight physics</span><span>Betaflight rates</span><span>Three.js</span></div>
+          <p class="keys">Sticks on keyboard, touch or gamepad</p>
+          <div class="links"><a class="button light small" href="games/fpv-time-trial/"><svg class="i" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg> Play FPV Micro Drones</a></div>
         </div>
       </article>
-
-      <!-- Game 03: Neural Puzzle -->
-      <article class="game-card">
-        <div>
-          <div class="card-header">
-            <span class="card-num">GAME 03</span>
-            <span class="status-pill ready">Playable</span>
-          </div>
-          <h3 class="card-title">Neural Puzzle</h3>
-          <p class="card-desc">
-            Futuristic logic and pattern-solving game. Rotate conduits to complete continuous neural circuits within move limits across 26 sectors and daily challenges.
-          </p>
-        </div>
-        <div>
-          <div class="card-meta">
-            <span>CSS Grid / Graph</span>
-            <a href="games/neural-puzzle/index.html" style="color: var(--violet-2); font-weight: 600;">Play Now →</a>
-          </div>
+      <article class="game spot reveal">
+        <a class="art art-space" href="games/space-defender/" tabindex="-1" aria-hidden="true"><i class="stars far"></i><i class="stars"></i><div class="invaders"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><i class="shot-line"></i><i class="ship"></i><span class="word">Defend</span></a>
+        <div class="body">
+          <div class="row"><small>03 · Arcade · Canvas 2D</small><span class="status live"><i></i>Playable</span></div>
+          <h3>Space Defender</h3>
+          <p>A fast, readable wave shooter. Hold deep-space outposts against escalating alien formations with three starfighter classes, smart bombs and power-ups.</p>
+          <div class="chips"><span>Canvas 2D</span><span>Particle pools</span><span>Upgrades</span></div>
+          <p class="keys">Move, shoot, bomb: keyboard or touch</p>
+          <div class="links"><a class="button light small" href="games/space-defender/"><svg class="i" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg> Play Space Defender</a></div>
         </div>
       </article>
-
-      <!-- Game 04: FPV Micro Drones -->
-      <article class="game-card">
-        <div>
-          <div class="card-header">
-            <span class="card-num">GAME 04</span>
-            <span class="status-pill ready">Playable</span>
-          </div>
-          <h3 class="card-title">FPV Micro Drones</h3>
-          <p class="card-desc">
-            Liftoff-inspired 3D FPV flight simulator. Fly 65mm Tinywhoops to 5-inch 6S beasts through living room gaps, cyber hangars, and canyon courses with Betaflight Actual Rates and procedural audio.
-          </p>
-        </div>
-        <div>
-          <div class="card-meta">
-            <span>Three.js / Sim</span>
-            <a href="games/fpv-time-trial/index.html" style="color: var(--violet-2); font-weight: 600;">Play Now →</a>
-          </div>
+      <article class="game spot reveal">
+        <a class="art art-neural" href="games/neural-puzzle/" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 300 180" aria-hidden="true"><rect class="tile" x="4" y="4" width="52" height="52" rx="8"/><rect class="tile" x="64" y="4" width="52" height="52" rx="8"/><rect class="tile" x="124" y="4" width="52" height="52" rx="8"/><rect class="tile" x="184" y="4" width="52" height="52" rx="8"/><rect class="tile" x="244" y="4" width="52" height="52" rx="8"/><rect class="tile" x="4" y="64" width="52" height="52" rx="8"/><rect class="tile" x="64" y="64" width="52" height="52" rx="8"/><rect class="tile" x="124" y="64" width="52" height="52" rx="8"/><rect class="tile" x="184" y="64" width="52" height="52" rx="8"/><rect class="tile" x="244" y="64" width="52" height="52" rx="8"/><rect class="tile" x="4" y="124" width="52" height="52" rx="8"/><rect class="tile" x="64" y="124" width="52" height="52" rx="8"/><rect class="tile" x="124" y="124" width="52" height="52" rx="8"/><rect class="tile" x="184" y="124" width="52" height="52" rx="8"/><rect class="tile" x="244" y="124" width="52" height="52" rx="8"/>
+<path class="wire" d="M30 30 H150 V90 H90 V150 H270 V90"/>
+<path class="wire" d="M210 30 H270 M210 30 V90"/>
+<path class="current" pathLength="100" d="M30 30 H150 V90 H90 V150 H270 V90"/>
+<circle class="node" cx="30" cy="30" r="10"/><circle class="node end" cx="270" cy="90" r="10"/></svg><span class="word">Solve</span></a>
+        <div class="body">
+          <div class="row"><small>04 · Logic · procedural</small><span class="status live"><i></i>Playable</span></div>
+          <h3>Neural Puzzle</h3>
+          <p>Rotate conduits to close the circuit before you run out of moves. 26 sectors, procedurally generated boards and a daily challenge.</p>
+          <div class="chips"><span>Graph search</span><span>Procedural levels</span><span>Daily challenge</span></div>
+          <p class="keys">Click or tap a tile to rotate it</p>
+          <div class="links"><a class="button light small" href="games/neural-puzzle/"><svg class="i" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg> Play Neural Puzzle</a></div>
         </div>
       </article>
+  </div>
+</section>
+
+<section class="section band">
+  <div class="inner">
+    <div class="head reveal">
+      <div><span class="tag">02 / How they are built</span><h2>Small, fast, from scratch.</h2></div>
+      <a class="text-link" href="https://github.com/yogesh660/featured-games" target="_blank" rel="noopener">The code on GitHub <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
     </div>
-  </main>
+    <div class="standards"><div class="standard reveal"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><h3>Nothing to install</h3><p>Open the link and play. No plugins, accounts or downloads; it all runs in the browser.</p></div><div class="standard reveal"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><h3>Sound made in code</h3><p>Engines, wind, lasers and chimes are synthesised with the Web Audio API. No audio files.</p></div><div class="standard reveal"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><h3>Keyboard and touch</h3><p>Every game has keyboard controls and on-screen controls for phones and tablets.</p></div><div class="standard reveal"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><h3>Runs on modest hardware</h3><p>Graphics presets (low, medium, high) and pooled objects keep the frame rate smooth.</p></div><div class="standard reveal"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><h3>Records stay with you</h3><p>Best laps and scores are saved in your browser, nowhere else.</p></div><div class="standard reveal"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><h3>Open source</h3><p>Every line is on GitHub, with a design doc for each game in docs/.</p></div></div>
+  </div>
+</section>
+</main>
 
-  <!-- Footer -->
-  <footer>
-    <div>Crafted for <a href="https://yogesh660.github.io" target="_blank" style="color:var(--ink);">yogesh660.github.io</a> · Static GitHub Pages</div>
-    <div style="display: flex; gap: 20px;">
-      <a href="docs/open-road-racer-gdd.md" target="_blank">Docs</a>
-      <a href="https://github.com/yogesh660/featured-games" target="_blank">GitHub Repository ↗</a>
-    </div>
-  </footer>
+<section id="contact" class="contact">
+  <span class="tag reveal">Let's connect</span>
+  <h2 class="reveal">Have a hard problem?<br><span>Let's make it simple.</span></h2>
+  <a class="email reveal" href="mailto:awateyogeshs@gmail.com">awateyogeshs@gmail.com <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+  <div class="socials reveal">
+    <a href="https://www.linkedin.com/in/yogesh-s-awate/" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg> LinkedIn</a>
+    <a href="https://github.com/yogesh660" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.1-1.2-.3-2.5-1-3.5.3-1.1.3-2.4 0-3.5 0 0-1 0-3 1.5a10.5 10.5 0 0 0-8 0C6 2 5 2 5 2c-.3 1.1-.3 2.4 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.4.5-.7 1-.9 1.6-.2.6-.2 1.3-.1 1.9v4"/><path d="M9 18c-4.5 2-5-2-7-2"/></svg> GitHub</a>
+    <a href="https://medium.com/@yogeshinawate" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Medium</a>
+    <a href="https://twitter.com/YogeshSAwate1" target="_blank" rel="noopener"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg> X / Twitter</a>
+  </div>
+</section>
 
+<footer>
+  <a class="mark" href="/">YA<span>.</span></a>
+  <div class="footlinks"><a href="/work/">Work</a><a href="/ml-model-zoo/">Learn</a><a href="./">Play</a><a href="/about/">About</a></div>
+  <span>© 2026 YOGESH AWATE</span>
+</footer>
+
+<script src="assets/site.js?v=2" defer></script>
 </body>
 </html>
