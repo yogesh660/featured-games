@@ -11,7 +11,7 @@ A collection of polished, responsive browser games hosted for free on GitHub Pag
 | **Open Road Racer** | 3D Scenic Mountain Driving & Time Trial | Three.js (r128), Web Audio API | **Playable Now** | [`games/open-road-racer/`](games/open-road-racer/index.html) |
 | **Space Defender** | 3D Arcade Wave Shooter | Three.js, Web Audio | *Scheduled (Step 4–6)* | [`games/space-defender/`](games/space-defender/index.html) |
 | **Neural Puzzle** | Logic & Pattern Circuit Routing | CSS Grid, Graph Traversal | *Scheduled (Step 7–9)* | [`games/neural-puzzle/`](games/neural-puzzle/index.html) |
-| **FPV Time Trial** | Acrobatic Drone Racing Obstacle Course | Three.js 3D, Flight Physics | *Scheduled (Step 10–12)* | [`games/fpv-time-trial/`](games/fpv-time-trial/index.html) |
+| **FPV Micro Drones** | FPV Drone Simulator | Three.js, Gamepad API, Web Audio | *Scheduled (Step 10–12)* | [`games/fpv-time-trial/`](games/fpv-time-trial/index.html) |
 
 ---
 
@@ -23,6 +23,16 @@ do not edit them here, copy them over from yogesh660.github.io. Hub-only styles 
 live in `assets/games.css`. Links to the other sections are root-relative (`/work/`, `/ml-model-zoo/`).
 
 ---
+
+## 🛸 FPV Micro Drones
+
+An FPV drone simulator in the browser, built from scratch with Three.js.
+
+* **Physics:** rigid-body quad with thrust along its own axis, gravity, face-dependent drag, motor lag and prop wash; sphere-versus-box collisions (whoops bounce, a 5" crashes on hard hits).
+* **Flight controller:** Betaflight Actual rates (beginner, Betaflight default, freestyle presets), Acro and Angle (self-levelling) modes.
+* **Controls:** keyboard in Mode 2 (`W/S` throttle that stays put, `A/D` yaw, arrows pitch and roll, `Shift` full stick, `Space` arm, `R` reset, `C` camera, `M` mode, `H` stick graphs); standard gamepads; RC radios such as the RadioMaster Pocket in USB joystick mode, with a setup wizard that finds each stick, its direction and end points, plus optional arm and mode switches.
+* **View:** FPV camera with adjustable uptilt and lens FOV, chase and line-of-sight cameras, goggle-style OSD (lap, best, gate, throttle, speed, altitude, battery sag) and live stick graphs.
+* **Tracks:** a furnished living room for the 65 mm Tinywhoop (8 gates, under the dining table, through the doorway) and a ghat-side bando for the 5" (under the water tank, in and out of the building's window bays). Best laps are saved per track and quad.
 
 ## 🚀 Space Defender (3D)
 
