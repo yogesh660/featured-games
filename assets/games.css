@@ -47,18 +47,12 @@
 .game.wide .body { flex: 1; justify-content: center; padding: clamp(28px, 4vw, 48px); }
 .game.wide h3 { font-size: clamp(32px, 3.6vw, 52px); }
 
-/* Open Road Racer: hills, a winding road and dashes rushing past */
-.art-road { background: linear-gradient(#141030 0, #3a1f4a 34%, #ff8a5c 52%, #1b1626 52.4%); perspective: 220px; perspective-origin: 50% 52.4%; }
-.art-road .sun { position: absolute; left: 62%; top: 26%; width: 16%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(#ffe2a8, #ff9a5c 60%, transparent 70%); filter: blur(1px); }
-.art-road .hills { position: absolute; inset: 30% 0 47%; background: #24183a; clip-path: polygon(0 100%, 0 55%, 12% 30%, 24% 52%, 38% 10%, 52% 48%, 63% 26%, 78% 58%, 90% 22%, 100% 44%, 100% 100%); }
-.art-road .hills.near { inset: 38% 0 47%; background: #170f26; clip-path: polygon(0 100%, 0 40%, 18% 70%, 30% 35%, 46% 75%, 60% 45%, 74% 80%, 88% 38%, 100% 66%, 100% 100%); }
-.art-road .road { position: absolute; left: -300%; right: -300%; bottom: 0; height: 520%; transform-origin: bottom; transform: rotateX(84deg);
-  background: linear-gradient(90deg, transparent 45.6%, #d9d9e0 45.6%, #d9d9e0 45.9%, #3a3a46 45.9%, #3a3a46 54.1%, #d9d9e0 54.1%, #d9d9e0 54.4%, transparent 54.4%),
-              linear-gradient(90deg, #122318, #1b3a23 40%, #1b3a23 60%, #122318); }
-.art-road .road::after { content: ""; position: absolute; left: calc(50% - 3px); width: 6px; top: 0; bottom: 0;
-  background: linear-gradient(#ffd34d 0 50%, transparent 50%) 0 0 / 6px 80px; animation: dashes .5s linear infinite; }
-@keyframes dashes { to { background-position: 0 80px; } }
-.game:hover .art-road .road::after { animation-duration: .25s; }
+/* Open Road: a real frame from the game, drifting slowly closer on hover */
+.art-shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 78% 50%; transform: scale(1.02); transition: transform 6s cubic-bezier(.2,.6,.2,1), filter .6s; filter: saturate(1.05); }
+.game:hover .art-shot img { transform: scale(1.12) translateY(-1.5%); filter: saturate(1.15); }
+.art-shot::after { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, transparent 55%, rgba(7,7,9,.55)); pointer-events: none; }
+.art-shot .word { color: #ffffff2a; }
+.game:hover .art-shot .word { color: #ffffff40; }
 
 /* Space Defender: a starfield scrolling past a ship holding the line */
 .art-space { background: radial-gradient(circle at 50% 120%, #2a1d6b, #0a0a18 60%); }
