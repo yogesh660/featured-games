@@ -1,271 +1,99 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#070709">
-  <title>FPV Micro Drones Simulator — Liftoff Style Browser FPV</title>
-  <link rel="stylesheet" href="css/game.css">
-  <!-- Pinned Three.js CDN (r128) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#070709">
+<title>FPV Micro Drones · Play · Yogesh Awate</title>
+<meta name="description" content="An FPV drone simulator in the browser: Betaflight Actual rates, acro and angle modes, RC radio support (RadioMaster, EdgeTX), a Tinywhoop living room and a 5-inch bando.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/fpv.css?v=1">
 </head>
 <body>
+<div id="stage"></div>
+<p id="loading">Binding receiver…</p>
 
-  <!-- WebGL 3D Canvas -->
-  <div id="canvas-container"></div>
-
-  <!-- FPV Analog Scanline & Static Goggle Overlay -->
-  <div id="fpv-static-overlay"></div>
-
-  <!-- FPV On-Screen Display (OSD) Overlay -->
-  <div id="hud-overlay">
-    
-    <!-- Top HUD Header -->
-    <div class="hud-top">
-      <div class="hud-pill">
-        <button class="hud-btn" id="btn-open-menu" title="Open Start Menu" style="padding:4px 8px; font-weight:bold;">☰ MENU</button>
-        <div class="hud-brand">
-          <div class="dot"></div>
-          <span id="hud-track-name">Loft Micro Slalom</span>
-        </div>
-        <div class="hud-timer" id="hud-timer">00:00.00</div>
-        <div class="hud-gate-info" id="hud-gate-info">GATE 1/6 · LAP 1/2</div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="hud-btn-group hud-interactive">
-        <button class="hud-btn" id="btn-testbench-hud" title="Run 20s Test Bench" style="color:#f59e0b; border-color:#f59e0b44;">🧪 TEST</button>
-        <button class="hud-btn" id="btn-drone">🚁 DRONES</button>
-        <button class="hud-btn" id="btn-env">🗺 MAPS</button>
-        <button class="hud-btn" id="btn-rates">⚙ RATES</button>
-        <button class="hud-btn" id="btn-cam">CAM: FPV</button>
-        <button class="hud-btn" id="btn-mode-toggle">MODE</button>
-        <button class="hud-btn" id="btn-reset" title="Reset Drone (R)">↺ RESET</button>
-        <button class="hud-btn" id="btn-audio" title="Toggle Sound">🔊 AUDIO</button>
-        <a href="../../index.html" class="hud-btn" title="Back to Games Portal" style="text-decoration:none; padding:8px 10px;">✕</a>
-      </div>
-    </div>
-
-    <!-- Center Artificial Horizon Ladder & Reticle -->
-    <div id="osd-center">
-      <div class="osd-crosshair"></div>
-      <div class="osd-horizon-ladder" id="osd-horizon-ladder">
-        <div class="osd-horizon-line"></div>
-      </div>
-    </div>
-
-    <!-- Target Gate Direction & Distance Badge -->
-    <div id="gate-target-arrow">
-      TARGET: Start Gate 0.0m
-    </div>
-
-    <!-- Left Throttle Gauge -->
-    <div class="osd-throttle-bar">
-      <div class="osd-throttle-fill" id="osd-throttle-fill"></div>
-    </div>
-    <div class="osd-throttle-label" id="osd-throttle-val">0%</div>
-
-    <!-- Center Race Alerts & Countdown -->
-    <div id="hud-alert">3</div>
-
-    <!-- Bottom Telemetry HUD -->
-    <div class="hud-bottom">
-      <div class="osd-telemetry">
-        <div>DRONE: <span class="highlight" id="hud-drone-name">Nano Bee 65</span> (<span id="hud-drone-category">Micro Drone</span>)</div>
-        <div>BEST TIME: <span class="highlight" id="hud-best-time-val">--:--.--</span></div>
-        <div id="hud-gamepad-badge" style="font-size:11px; margin-top:2px; color:#9ca3af;">⌨ KEYBOARD MODE (OR PLUG IN USB RC TRANSMITTER)</div>
-      </div>
-
-      <div class="osd-telemetry" style="text-align: right;">
-        <div>SPEED: <span class="highlight" id="osd-speed-val">0</span> KM/H</div>
-        <div>BATT: <span class="highlight" id="osd-volt-val">4.20</span>V</div>
-        <div style="margin-top:4px;">
-          <span class="osd-flight-mode angle" id="osd-flight-mode">ANGLE</span>
-        </div>
-      </div>
-    </div>
-
+<!-- goggle OSD -->
+<div class="osd">
+  <div class="o-tl"><span>LAP <b id="o-lap">0:00.00</b></span><span>BEST <b id="o-best">–</b></span></div>
+  <div class="o-tc"><span>GATE <b id="o-gate">1/8</b></span></div>
+  <div class="o-tr"><b id="o-mode">ANGLE</b><span id="o-quad">WHOOP</span><span id="o-src">KEYS</span></div>
+  <div class="cross" aria-hidden="true"></div>
+  <p id="o-status" class="status">DISARMED</p>
+  <p id="osd-msg" class="msg"></p>
+  <div class="o-bottom">
+    <span><small>THR</small><b id="o-thr">0%</b></span>
+    <span><small>KM/H</small><b id="o-spd">0</b></span>
+    <span><small>ALT</small><b id="o-alt">0.0</b></span>
+    <span><small>BAT</small><b id="o-bat">4.20V</b></span>
+    <span><small>TIME</small><b id="o-flight">0:00</b></span>
   </div>
+  <canvas id="sticks" width="260" height="118" aria-label="Stick positions"></canvas>
+</div>
 
-  <!-- Touch Virtual Sticks (Mobile Support) -->
-  <div class="touch-zone" id="touch-left">
-    <div class="touch-knob"></div>
-  </div>
-  <div class="touch-zone" id="touch-right">
-    <div class="touch-knob"></div>
-  </div>
+<!-- menu -->
+<section id="menu" class="menu">
+  <div class="panel">
+    <a class="back" href="../../">← Play</a>
+    <p class="eyebrow">FPV simulator · Betaflight rates</p>
+    <h1>FPV Micro Drones</h1>
+    <p class="lede">Rip a Tinywhoop round the living room or take a 5-inch through a ghat-side bando. Real acro physics, goggle OSD, and your own radio.</p>
 
-  <!-- MODAL 0: Game Start Menu / Onboarding Modal (Matching Car Game Pattern) -->
-  <div class="modal-overlay open" id="modal-start">
-    <div class="start-panel">
-      <div class="start-hero">
-        <div class="start-kicker">Simulation Pilot Briefing · 3D WebGL</div>
-        <h1 class="start-title">FPV Micro Drones Simulator</h1>
-        <p class="start-desc">
-          Liftoff-inspired acrobatic FPV racing simulator with real Betaflight Actual Rates, micro-drone living room slalom, and scalable fleet dynamics from 65mm Tinywhoops to 5-inch 6S beasts.
-        </p>
-      </div>
-
-      <!-- Quick Drone Selection -->
-      <div>
-        <div class="start-section-title">Select Drone Class</div>
-        <div class="start-pills-row" id="start-drone-pills">
-          <div class="start-pill-opt active" data-drone="tinywhoop65">🚁 Nano Bee 65 (Tinywhoop 1S)</div>
-          <div class="start-pill-opt" data-drone="meteor75">💨 Meteor 75 Pro (Power Whoop 2S)</div>
-          <div class="start-pill-opt" data-drone="cinewhoop25">🛡 CineBumble 2.5 (Cinewhoop 4S)</div>
-          <div class="start-pill-opt" data-drone="toothpick3">⚡ Ghost Toothpick 3 (Ultralight 3S)</div>
-          <div class="start-pill-opt" data-drone="phantom35">🎯 Phantom Micro 3.5 (Freestyle 4S)</div>
-          <div class="start-pill-opt" data-drone="apex5racer">🔥 Apex Predator 5 (6S Pro Racer)</div>
-        </div>
-      </div>
-
-      <!-- Quick Environment Selection -->
-      <div>
-        <div class="start-section-title">Select Environment / Course</div>
-        <div class="start-pills-row" id="start-env-pills">
-          <div class="start-pill-opt active" data-env="living-room">🛋 The Cozy Loft (Micro Living Room)</div>
-          <div class="start-pill-opt" data-env="cyber-warehouse">🏭 Neon Hangar (Industrial Warehouse)</div>
-          <div class="start-pill-opt" data-env="cyber-city">🌆 Neon City Rooftops (Cyberpunk Sky)</div>
-          <div class="start-pill-opt" data-env="alpine-canyon">⛰ Sunset Ridge (High-Speed Canyon)</div>
-        </div>
-      </div>
-
-      <!-- Flight Mode Selection -->
-      <div>
-        <div class="start-section-title">Flight Stabilization Mode</div>
-        <div class="start-pills-row" id="start-mode-pills">
-          <div class="start-pill-opt active" data-mode="ANGLE">🟢 ANGLE (Auto-Level & Hover Assist · Recommended)</div>
-          <div class="start-pill-opt" data-mode="ACRO">🟣 ACRO (Full Manual Rates · FPV Pro Pilots)</div>
-        </div>
-      </div>
-
-      <!-- Controls Guide -->
-      <div>
-        <div class="start-section-title">Controls Reference</div>
-        <div class="kbd-grid">
-          <div class="kbd-item"><kbd>W</kbd> / <kbd>↑</kbd> Pitch Down (Forward)</div>
-          <div class="kbd-item"><kbd>S</kbd> / <kbd>↓</kbd> Pitch Up (Brake/Back)</div>
-          <div class="kbd-item"><kbd>A</kbd> / <kbd>D</kbd> Roll Bank Left / Right</div>
-          <div class="kbd-item"><kbd>Space</kbd> / <kbd>Shift</kbd> Throttle Climb</div>
-          <div class="kbd-item"><kbd>Ctrl</kbd> / <kbd>X</kbd> Throttle Cut</div>
-          <div class="kbd-item"><kbd>Q</kbd> / <kbd>E</kbd> Yaw Turn Left / Right</div>
-          <div class="kbd-item"><kbd>R</kbd> Reset Drone</div>
-          <div class="kbd-item"><kbd>T</kbd> Turtle Flip</div>
-          <div class="kbd-item"><kbd>C</kbd> Camera View</div>
-          <div class="kbd-item"><kbd>M</kbd> Toggle Flight Mode</div>
-        </div>
-        <div style="font-size:11px; color:#94a3b8; margin-top:6px;">
-          🎮 <strong>RC Radios & Controllers:</strong> Connect your Radiomaster, FrSky, TBS Tango, Xbox, or PlayStation controller via USB for plug-and-play Mode 2 stick flight.
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="start-actions">
-        <button class="btn-launch" id="btn-start-flight">🚀 LAUNCH FLIGHT</button>
-        <button class="btn-testbench" id="btn-start-testbench">🧪 RUN 20s TEST BENCH (AUTOPILOT)</button>
-        <a href="../../index.html" class="hud-btn" style="text-decoration:none; padding:12px 16px; border-radius:8px;">✕ Exit to Hub</a>
-      </div>
+    <div class="grid">
+      <div class="row"><span>Track</span><div class="choice" data-opt="track">
+        <button data-value="living">Living room</button><button data-value="bando">Ghat bando</button></div></div>
+      <div class="row"><span>Quad</span><div class="choice" data-opt="quad">
+        <button data-value="whoop">Tinywhoop 65 mm</button><button data-value="freestyle">5" freestyle</button></div></div>
+      <div class="row"><span>Mode</span><div class="choice" data-opt="mode">
+        <button data-value="angle">Angle (self-level)</button><button data-value="acro">Acro</button></div></div>
+      <div class="row"><span>Rates</span><div><div class="choice" data-opt="rates">
+        <button data-value="beginner">Beginner</button><button data-value="betaflight">Betaflight</button><button data-value="freestyle">Freestyle</button></div><small id="rates-note" class="note"></small></div></div>
+      <div class="row"><span>Camera</span><div class="sliders">
+        <label>Uptilt <input id="tilt" type="range" min="0" max="50" step="1"><b id="tilt-v">0°</b></label>
+        <label>FOV <input id="fov" type="range" min="90" max="150" step="1"><b id="fov-v">118°</b></label></div></div>
+      <div class="row"><span>Controller</span><div><p id="pad-status" class="note">No controller: keyboard</p>
+        <button id="radio-setup" class="btn ghost small" type="button">Set up radio / joystick</button></div></div>
     </div>
+
+    <div class="go"><button id="fly" class="btn light" type="button">Fly</button></div>
+
+    <details class="keys">
+      <summary>Controls</summary>
+      <div class="cols">
+        <ul><li class="h">Keyboard (Mode 2)</li>
+          <li><kbd>W</kbd><kbd>S</kbd> throttle (stays put)</li><li><kbd>A</kbd><kbd>D</kbd> yaw</li>
+          <li><kbd>↑</kbd><kbd>↓</kbd> pitch</li><li><kbd>←</kbd><kbd>→</kbd> roll</li><li><kbd>Shift</kbd> full stick</li></ul>
+        <ul><li class="h">Always</li>
+          <li><kbd>Space</kbd> arm / disarm</li><li><kbd>R</kbd> reset</li><li><kbd>C</kbd> FPV / chase / line of sight</li>
+          <li><kbd>M</kbd> angle / acro</li><li><kbd>H</kbd> stick graphs</li><li><kbd>Esc</kbd> menu</li></ul>
+        <ul><li class="h">Radio</li>
+          <li>Plug in by USB, pick Joystick (HID) on the radio, run setup once.</li>
+          <li>Arm and mode switches can be mapped.</li><li>Gamepad: <kbd>A</kbd> arm, <kbd>Y</kbd> reset, <kbd>X</kbd> camera, <kbd>B</kbd> mode.</li></ul>
+      </div>
+    </details>
   </div>
+</section>
 
-  <!-- MODAL 1: Drone Fleet Hangar Selection -->
-  <div class="modal-overlay" id="modal-drone">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title">🚁 FPV Drone Fleet Hangar</div>
-        <button class="modal-close" id="close-modal-drone">&times;</button>
-      </div>
-      <p style="font-size: 13px; color: var(--text-muted);">
-        Select from authentic micro-whoops to heavyweight 5-inch racing quads. Each has unique mass, motor spool latency, aerodynamic duct drag, and camera tilt.
-      </p>
-      <div class="cards-grid" id="drone-cards-container"></div>
-    </div>
+<!-- radio wizard -->
+<section id="wizard" class="menu wiz" hidden>
+  <div class="panel small">
+    <p class="eyebrow" id="wiz-step">Radio setup</p>
+    <h2>Set up your radio</h2>
+    <p id="wiz-text" class="lede">Plug the radio in over USB and choose Joystick (HID) on it. Then move any stick.</p>
+    <div id="wiz-axes" class="axes"></div>
+    <p id="wiz-found" class="note"></p>
+    <p id="wiz-note" class="note"></p>
+    <div class="go"><button id="wiz-next" class="btn light" type="button">Next</button><button id="wiz-skip" class="btn ghost" type="button" hidden>Skip</button><button id="wiz-cancel" class="btn ghost" type="button">Cancel</button></div>
   </div>
+</section>
 
-  <!-- MODAL 2: Environment Selector -->
-  <div class="modal-overlay" id="modal-env">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title">🗺 Select Environment & Course</div>
-        <button class="modal-close" id="close-modal-env">&times;</button>
-      </div>
-      <p style="font-size: 13px; color: var(--text-muted);">
-        From tight indoor living rooms with chair slalom to industrial warehouse acrobatic complexes and outdoor high-speed canyons.
-      </p>
-      <div class="cards-grid" id="env-cards-container"></div>
-    </div>
-  </div>
-
-  <!-- MODAL 3: Betaflight Rates & Flight Settings -->
-  <div class="modal-overlay" id="modal-rates">
-    <div class="modal-card">
-      <div class="modal-header">
-        <div class="modal-title">⚙ Betaflight Rates & Controller Tuning</div>
-        <button class="modal-close" id="close-modal-rates">&times;</button>
-      </div>
-
-      <!-- Presets Dropdown -->
-      <div class="form-group">
-        <label style="font-size:12px; font-weight:600; color:var(--cyan-neon);">RATE PRESETS</label>
-        <select id="rates-preset-select" style="background:#1e2230; color:#fff; border:1px solid #334155; padding:8px; border-radius:6px; outline:none; font-family:var(--osd-font);">
-          <option value="micro-indoor">Liftoff: Micro Drones (Calm Center / Micro Precision)</option>
-          <option value="freestyle">Freestyle Acro (Smooth Juicy Flow)</option>
-          <option value="race-fast">High-Speed 5-Inch Racing (Aggressive Top End)</option>
-          <option value="beginner-stabilized">Gentle Beginner (Low Rates)</option>
-        </select>
-      </div>
-
-      <!-- Rate Sliders -->
-      <div class="form-group">
-        <div class="form-label-row">
-          <span>Center Sensitivity (deg/s):</span>
-          <span id="center-val-display" style="color:var(--cyan-neon); font-family:var(--osd-font);">80 deg/s</span>
-        </div>
-        <input type="range" class="slider-input" id="rate-center" min="30" max="250" value="80">
-      </div>
-
-      <div class="form-group">
-        <div class="form-label-row">
-          <span>Max Rotation Rate (deg/s):</span>
-          <span id="max-val-display" style="color:var(--cyan-neon); font-family:var(--osd-font);">670 deg/s</span>
-        </div>
-        <input type="range" class="slider-input" id="rate-max" min="300" max="1200" value="670">
-      </div>
-
-      <div class="form-group">
-        <div class="form-label-row">
-          <span>Actual Expo:</span>
-          <span id="expo-val-display" style="color:var(--cyan-neon); font-family:var(--osd-font);">0.52</span>
-        </div>
-        <input type="range" class="slider-input" id="rate-expo" min="0" max="95" value="52">
-      </div>
-
-      <div class="form-group">
-        <div class="form-label-row">
-          <span>FPV Camera Tilt Angle:</span>
-          <span id="tilt-val-display" style="color:var(--cyan-neon); font-family:var(--osd-font);">20°</span>
-        </div>
-        <input type="range" class="slider-input" id="camera-tilt-input" min="0" max="60" value="20">
-      </div>
-
-      <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; font-size: 12px; color: var(--text-muted); line-height: 1.6;">
-        <strong style="color: #fff;">Controller Guide:</strong><br>
-        • <strong>RC Radios / Gamepads:</strong> Connect Radiomaster, FrSky, TBS, or Xbox controller via USB. Automatically recognized in Mode 2 (Left stick: Throttle/Yaw, Right stick: Pitch/Roll).<br>
-        • <strong>Keyboard:</strong> Space/W = Throttle Up, Ctrl/S = Throttle Down, Arrow Keys/IJKL = Pitch & Roll, Q/E = Yaw, R = Reset, T = Turtle Mode Flip, C = Toggle FPV/Chase Cam, M = Toggle Acro/Angle Mode.
-      </div>
-    </div>
-  </div>
-
-  <!-- Game Scripts -->
-  <script src="js/rates.js"></script>
-  <script src="js/drone_specs.js"></script>
-  <script src="js/physics.js"></script>
-  <script src="js/environments.js"></script>
-  <script src="js/tracks.js"></script>
-  <script src="js/controls.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/test_bench.js"></script>
-  <script src="js/game.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/input.js?v=1"></script>
+<script src="js/drone.js?v=1"></script>
+<script src="js/maps.js?v=1"></script>
+<script src="js/audio.js?v=1"></script>
+<script src="js/main.js?v=1"></script>
 </body>
 </html>
