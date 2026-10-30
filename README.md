@@ -15,6 +15,15 @@ A collection of polished, responsive browser games hosted for free on GitHub Pag
 
 ---
 
+## 🧭 Part of the portfolio site
+
+This hub is the **Play** section of the portfolio (nav: Work · Learn · Play · About · Contact).
+`assets/site.css` and `assets/site.js` are verbatim copies of the portfolio's `src/site.css` and `src/site.js`;
+do not edit them here, copy them over from yogesh660.github.io. Hub-only styles and the animated game art
+live in `assets/games.css`. Links to the other sections are root-relative (`/work/`, `/ml-model-zoo/`).
+
+---
+
 ## 🏎️ Game 01: Open Road Racer (Playable Now)
 
 Inspired by relaxing exploration games (*Slow Roads*), set across the winding ghats and basalt escarpments of India's **Western Ghats / Sahyadri**:
